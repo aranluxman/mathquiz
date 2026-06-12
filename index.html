@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>MathFlow — Mental Math Speed Drills</title>
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+<!-- Supabase + Chart.js from CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+
+<style>
+/* ============================================================
+   THEME VARIABLES
+   Dark is the default. Light mode overrides via [data-theme].
+   ============================================================ */
+:root,
+[data-theme="dark"] {
+  --bg: #0F1115;            /* deep charcoal page background */
+  --bg-soft: #15181F;       /* slightly raised surfaces */
+  --card: #1A1E27;          /* card surfaces */
+  --card-border: #262B36;
+  --text: #F2F4F8;          /* primary, high contrast */
+  --text-soft: #8A92A3;     /* muted secondary */
+  --accent: #2DD4BF;        /* electric teal accent */
+  --accent-soft: rgba(45, 212, 191, 0.14);
+  --accent-glow: rgba(45, 212, 191, 0.35);
+  --danger: #F87171;
+  --track: #262B36;         /* progress track / inactive toggle */
+  --input-bg: #12141A;
+  --shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+}
+
+[data-theme="light"] {
+  --bg: #F4F6FA;
+  --bg-soft: #EBEEF4;
+  --card: #FFFFFF;
+  --card-border: #E2E6EE;
+  --text: #14181F;
+  --text-soft: #6B7383;
+  --accent: #0D9488;
+  --accent-soft: rgba(13, 148, 136, 0.12);
+  --accent-glow: rgba(13, 148, 136, 0.25);
+  --danger: #DC2626;
+  --track: #D8DDE6;
+  --input-bg: #F4F6FA;
+  --shadow: 0 8px 30px rgba(20, 24, 31, 0.08);
+}
+
+/* ============================================================
+   BASE
+   ============================================================ */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Inter", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.25s ease, color 0.25s ease;
+}
+
+.app {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 18px calc(20px + env(safe-area-inset-bottom));
+}
+
+/* Screens fade in quickly when shown */
+.screen { display: none; flex: 1; flex-direction: column; animation: fadeIn 0.18s ease; }
+.screen.active { display: flex; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+h1, h2, .problem, .stat-value { font-family: "Space Grotesk", "Inter", sans-serif; }
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+.brand { font-family: "Space Grotesk", sans-serif; font-weight: 700; font-size: 20px; letter-spacing: -0.02em; }
+.brand span { color: var(--accent); }
+
+.topbar-actions { display: flex; gap: 8px; }
+
+.icon-btn {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  color: var(--text-soft);
+  border-radius: 12px;
+  width: 38px; height: 38px;
+  font-size: 17px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: color 0.15s, border-color 0.15s;
+}
+.icon-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+.back-btn {
+  background: none; border: none; color: var(--text-soft);
+  font-size: 22px; cursor: pointer; padding: 4px 10px 4px 0;
+}
+.back-btn:hover { color: var(--text); }
+
+/* ============================================================
+   SETTINGS SCREEN
+   ============================================================ */
+.section-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 6px 4px 10px;
+}
+
+.ops-card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  margin-bottom: 22px;
+}
+
+.op-row {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--card-border);
+}
+.op-row:last-child { border-bottom: none; }
+
+.op-head { display: flex; align-items: center; gap: 12px; }
+
+.op-icon {
+  width: 34px; height: 34px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+.op-icon.add { background: #34D399; }
+.op-icon.sub { background: #FBBF24; }
+.op-icon.mul { background: #60A5FA; }
+.op-icon.div { background: #A78BFA; }
+
+.op-name { flex: 1; font-weight: 600; font-size: 15px; }
+
+/* Toggle switch */
+.toggle { position: relative; width: 48px; height: 28px; flex-shrink: 0; }
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle .slider {
+  position: absolute; inset: 0;
+  background: var(--track);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.toggle .slider::before {
+  content: "";
+  position: absolute;
+  width: 22px; height: 22px;
+  left: 3px; top: 3px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+.toggle input:checked + .slider { background: var(--accent); box-shadow: 0 0 12px var(--accent-glow); }
+.toggle input:checked + .slider::before { transform: translateX(20px); }
+
+/* Min/Max range row, shown only when the operation is enabled */
+.op-range {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding-left: 46px;
+}
+.op-row.disabled .op-range { display: none; }
+
+.range-input {
+  width: 72px;
+  background: var(--input-bg);
+  border: 1px solid var(--card-border);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 14px;
+  font-family: inherit;
+  text-align: center;
+  transition: border-color 0.15s;
+}
+.range-input:focus { outline: none; border-color: var(--accent); }
+.range-dash { color: var(--text-soft); }
+
+/* Time limit pills */
+.time-pills { display: flex; gap: 8px; margin-bottom: 26px; }
+.time-pill {
+  flex: 1;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  color: var(--text-soft);
+  border-radius: 12px;
+  padding: 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.time-pill.selected {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: 0 0 14px var(--accent-glow);
+}
+
+/* Primary button */
+.btn-primary {
+  width: 100%;
+  background: var(--accent);
+  color: #06211D;
+  border: none;
+  border-radius: 14px;
+  padding: 16px;
+  font-size: 17px;
+  font-weight: 700;
+  font-family: "Space Grotesk", sans-serif;
+  cursor: pointer;
+  box-shadow: 0 0 24px var(--accent-glow);
+  transition: transform 0.1s, opacity 0.15s;
+}
+.btn-primary:active { transform: scale(0.98); }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
+
+.btn-secondary {
+  width: 100%;
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  padding: 14px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  margin-top: 10px;
+}
+.btn-secondary:hover { border-color: var(--accent); }
+
+.settings-error {
+  color: var(--danger);
+  font-size: 13px;
+  text-align: center;
+  margin-top: 10px;
+  min-height: 18px;
+}
+
+/* ============================================================
+   GAME SCREEN
+   ============================================================ */
+.game-top {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 10px;
+}
+.timer {
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 700;
+  font-size: 19px;
+  color: var(--accent);
+  min-width: 64px;
+  display: flex; align-items: center; gap: 6px;
+}
+.timer.low { color: var(--danger); animation: pulse 1s infinite; }
+@keyframes pulse { 50% { opacity: 0.5; } }
+
+.time-track { flex: 1; height: 6px; background: var(--track); border-radius: 999px; overflow: hidden; }
+.time-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
+  box-shadow: 0 0 8px var(--accent-glow);
+  transition: width 0.25s linear;
+}
+
+.score-chip {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-weight: 700;
+  font-size: 15px;
+  display: flex; align-items: center; gap: 6px;
+}
+.score-chip .star { color: var(--accent); }
+
+.game-center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding-bottom: 8vh;
+}
+
+.problem {
+  font-size: clamp(56px, 17vw, 88px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-align: center;
+  animation: popIn 0.15s ease;
+}
+@keyframes popIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: none; } }
+
+.prompt-hint { color: var(--text-soft); font-size: 15px; margin-bottom: 18px; }
+
+.answer-input {
+  width: min(78vw, 300px);
+  background: var(--input-bg);
+  border: 2px solid var(--accent);
+  box-shadow: 0 0 18px var(--accent-glow);
+  color: var(--text);
+  border-radius: 16px;
+  padding: 18px;
+  font-size: 30px;
+  font-weight: 700;
+  font-family: "Space Grotesk", sans-serif;
+  text-align: center;
+  caret-color: var(--accent);
+}
+.answer-input:focus { outline: none; }
+
+/* Wrong-answer shake */
+.answer-input.shake {
+  animation: shake 0.3s ease;
+  border-color: var(--danger);
+  box-shadow: 0 0 18px rgba(248, 113, 113, 0.3);
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-9px); }
+  50% { transform: translateX(8px); }
+  75% { transform: translateX(-5px); }
+}
+
+.quit-btn {
+  align-self: center;
+  background: none; border: none;
+  color: var(--text-soft);
+  font-size: 13px; cursor: pointer;
+  font-family: inherit;
+  padding: 8px;
+}
+.quit-btn:hover { color: var(--danger); }
+
+/* ============================================================
+   RESULTS / STATS
+   ============================================================ */
+.results-title { font-size: 26px; font-weight: 700; text-align: center; margin: 8px 0 4px; }
+.results-sub { color: var(--text-soft); text-align: center; font-size: 14px; margin-bottom: 20px; }
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.stat-card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: var(--shadow);
+}
+.stat-value { font-size: 28px; font-weight: 700; color: var(--accent); }
+.stat-label { font-size: 12px; color: var(--text-soft); margin-top: 4px; }
+
+.save-status {
+  text-align: center;
+  font-size: 13px;
+  min-height: 20px;
+  margin-bottom: 14px;
+}
+.save-status.ok { color: var(--accent); }
+.save-status.err { color: var(--danger); }
+
+/* Chart card */
+.chart-card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: var(--shadow);
+  margin-bottom: 16px;
+}
+.chart-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.chart-title { font-weight: 600; font-size: 15px; }
+
+.metric-toggle { display: flex; background: var(--input-bg); border-radius: 10px; padding: 3px; }
+.metric-btn {
+  background: none; border: none;
+  color: var(--text-soft);
+  font-size: 12px; font-weight: 600;
+  font-family: inherit;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.metric-btn.selected { background: var(--accent); color: #06211D; }
+
+.chart-wrap { position: relative; height: 220px; }
+.chart-empty {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-soft); font-size: 14px;
+  text-align: center; padding: 0 20px;
+}
+
+.summary-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 18px; }
+.summary-card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  padding: 12px;
+  text-align: center;
+}
+.summary-value { font-family: "Space Grotesk", sans-serif; font-size: 20px; font-weight: 700; }
+.summary-label { font-size: 11px; color: var(--text-soft); margin-top: 3px; }
+
+@media (min-width: 700px) {
+  .app { max-width: 560px; padding-top: 36px; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ===================== HEADER ===================== -->
+  <header class="topbar">
+    <div class="brand">Math<span>Flow</span></div>
+    <div class="topbar-actions">
+      <button class="icon-btn" id="statsBtn" title="Stats" aria-label="Stats">📈</button>
+      <button class="icon-btn" id="themeBtn" title="Toggle light / dark mode" aria-label="Toggle theme">☀️</button>
+    </div>
+  </header>
+
+  <!-- ===================== SETTINGS SCREEN ===================== -->
+  <section class="screen active" id="screen-settings">
+    <div class="section-label"><span>Operation</span><span>Min — Max</span></div>
+
+    <div class="ops-card" id="opsCard">
+      <!-- Operation rows are generated by JS from the OPERATIONS config -->
+    </div>
+
+    <div class="section-label"><span>Time limit</span></div>
+    <div class="time-pills" id="timePills">
+      <button class="time-pill" data-secs="30">30s</button>
+      <button class="time-pill selected" data-secs="60">60s</button>
+      <button class="time-pill" data-secs="120">2m</button>
+      <button class="time-pill" data-secs="300">5m</button>
+    </div>
+
+    <button class="btn-primary" id="startBtn">Start</button>
+    <div class="settings-error" id="settingsError"></div>
+  </section>
+
+  <!-- ===================== GAME SCREEN ===================== -->
+  <section class="screen" id="screen-game">
+    <div class="game-top">
+      <div class="timer" id="timerLabel">⏱ 0:60</div>
+      <div class="time-track"><div class="time-fill" id="timeFill"></div></div>
+      <div class="score-chip"><span class="star">★</span><span id="scoreLabel">0</span></div>
+    </div>
+
+    <div class="game-center">
+      <div class="problem" id="problemText">7 × 8</div>
+      <div class="prompt-hint">What is the answer?</div>
+      <input
+        class="answer-input"
+        id="answerInput"
+        type="text"
+        inputmode="numeric"
+        pattern="[0-9]*"
+        autocomplete="off"
+        autocorrect="off"
+        spellcheck="false"
+      />
+    </div>
+
+    <button class="quit-btn" id="quitBtn">End round early</button>
+  </section>
+
+  <!-- ===================== RESULTS SCREEN ===================== -->
+  <section class="screen" id="screen-results">
+    <div class="results-title">Round complete</div>
+    <div class="results-sub" id="resultsSub"></div>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-value" id="rSolved">0</div><div class="stat-label">Problems solved</div></div>
+      <div class="stat-card"><div class="stat-value" id="rAccuracy">0%</div><div class="stat-label">Accuracy</div></div>
+      <div class="stat-card"><div class="stat-value" id="rAvg">0s</div><div class="stat-label">Avg per problem</div></div>
+      <div class="stat-card"><div class="stat-value" id="rFastest">—</div><div class="stat-label">Fastest answer</div></div>
+    </div>
+
+    <div class="save-status" id="saveStatus"></div>
+
+    <button class="btn-primary" id="againBtn">Play again</button>
+    <button class="btn-secondary" id="resultsStatsBtn">View progress</button>
+  </section>
+
+  <!-- ===================== STATS SCREEN ===================== -->
+  <section class="screen" id="screen-stats">
+    <div style="display:flex; align-items:center; margin-bottom: 14px;">
+      <button class="back-btn" id="statsBackBtn" aria-label="Back">←</button>
+      <h2 style="font-size:20px;">Your progress</h2>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-head">
+        <div class="chart-title">Over time</div>
+        <div class="metric-toggle">
+          <button class="metric-btn selected" data-metric="solved">Solved</button>
+          <button class="metric-btn" data-metric="accuracy">Accuracy</button>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="progressChart"></canvas>
+        <div class="chart-empty" id="chartEmpty" style="display:none;"></div>
+      </div>
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-card"><div class="summary-value" id="sBest">—</div><div class="summary-label">Best score</div></div>
+      <div class="summary-card"><div class="summary-value" id="sAvg">—</div><div class="summary-label">Avg score</div></div>
+      <div class="summary-card"><div class="summary-value" id="sTotal">—</div><div class="summary-label">Sessions</div></div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+/* ==================================================================
+   SUPABASE CONFIG
+   👉 PASTE YOUR OWN VALUES HERE.
+   Find them in your Supabase dashboard under
+   Project Settings → API (Project URL and the "anon public" key).
+   ================================================================== */
+const SUPABASE_URL = "PASTE_YOUR_SUPABASE_URL_HERE";
+const SUPABASE_ANON_KEY = "PASTE_YOUR_SUPABASE_ANON_KEY_HERE";
+
+// The Supabase client is only created if real-looking values were pasted in,
+// so the app still works (without saving) before you configure it.
+const sb = SUPABASE_URL.startsWith("http")
+  ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
+
+/* ==================================================================
+   OPERATIONS CONFIG
+   Each entry drives one row of the settings screen and one branch
+   of the problem generator.
+   ================================================================== */
+const OPERATIONS = [
+  { key: "add", name: "Addition",       symbol: "+", cls: "add", enabled: true,  min: 1, max: 20 },
+  { key: "sub", name: "Subtraction",    symbol: "−", cls: "sub", enabled: true,  min: 1, max: 20 },
+  { key: "mul", name: "Multiplication", symbol: "×", cls: "mul", enabled: true,  min: 1, max: 12 },
+  { key: "div", name: "Division",       symbol: "÷", cls: "div", enabled: true,  min: 1, max: 12 },
+];
+
+/* ==================================================================
+   STATE
+   ================================================================== */
+const state = {
+  timeLimit: 60,        // seconds, selected on the settings screen
+  timeLeft: 0,
+  timerId: null,
+  current: null,        // { text, answer }
+  solved: 0,
+  wrongAttempts: 0,
+  problemStart: 0,      // timestamp when the current problem appeared
+  solveTimes: [],       // seconds taken per solved problem
+  lastResults: null,
+  chart: null,
+  chartMetric: "solved",
+  sessionsCache: null,  // last-fetched sessions, reused on theme/metric change
+};
+
+/* ==================================================================
+   DOM HELPERS
+   ================================================================== */
+const $ = (id) => document.getElementById(id);
+
+function showScreen(name) {
+  document.querySelectorAll(".screen").forEach((s) => s.classList.remove("active"));
+  $("screen-" + name).classList.add("active");
+}
+
+/* ==================================================================
+   THEME (dark by default, toggle persists in localStorage)
+   ================================================================== */
+function applyTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  $("themeBtn").textContent = theme === "dark" ? "☀️" : "🌙";
+  localStorage.setItem("mathflow-theme", theme);
+  // Re-style the chart for the new palette if it exists.
+  if (state.chart && state.sessionsCache) renderChart(state.sessionsCache);
+}
+
+$("themeBtn").addEventListener("click", () => {
+  const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+  applyTheme(next);
+});
+
+applyTheme(localStorage.getItem("mathflow-theme") || "dark");
+
+/* ==================================================================
+   SETTINGS SCREEN
+   ================================================================== */
+function buildSettings() {
+  const card = $("opsCard");
+  card.innerHTML = "";
+  for (const op of OPERATIONS) {
+    const row = document.createElement("div");
+    row.className = "op-row" + (op.enabled ? "" : " disabled");
+    row.innerHTML = `
+      <div class="op-head">
+        <div class="op-icon ${op.cls}">${op.symbol}</div>
+        <div class="op-name">${op.name}</div>
+        <label class="toggle">
+          <input type="checkbox" ${op.enabled ? "checked" : ""} data-op="${op.key}">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="op-range">
+        <input class="range-input" type="number" inputmode="numeric" min="0" value="${op.min}" data-op="${op.key}" data-bound="min" aria-label="${op.name} minimum">
+        <span class="range-dash">—</span>
+        <input class="range-input" type="number" inputmode="numeric" min="1" value="${op.max}" data-op="${op.key}" data-bound="max" aria-label="${op.name} maximum">
+      </div>`;
+    card.appendChild(row);
+
+    row.querySelector('input[type="checkbox"]').addEventListener("change", (e) => {
+      op.enabled = e.target.checked;
+      row.classList.toggle("disabled", !op.enabled);
+      $("settingsError").textContent = "";
+    });
+    row.querySelectorAll(".range-input").forEach((input) => {
+      input.addEventListener("change", (e) => {
+        op[e.target.dataset.bound] = parseInt(e.target.value, 10) || 1;
+      });
+    });
+  }
+}
+buildSettings();
+
+// Time-limit pills
+$("timePills").addEventListener("click", (e) => {
+  const pill = e.target.closest(".time-pill");
+  if (!pill) return;
+  document.querySelectorAll(".time-pill").forEach((p) => p.classList.remove("selected"));
+  pill.classList.add("selected");
+  state.timeLimit = parseInt(pill.dataset.secs, 10);
+});
+
+$("startBtn").addEventListener("click", () => {
+  const enabled = OPERATIONS.filter((o) => o.enabled);
+  if (enabled.length === 0) {
+    $("settingsError").textContent = "Turn on at least one operation to start.";
+    return;
+  }
+  // Normalize any inverted ranges instead of erroring.
+  for (const op of enabled) {
+    if (op.min > op.max) [op.min, op.max] = [op.max, op.min];
+  }
+  startRound();
+});
+
+/* ==================================================================
+   PROBLEM GENERATION
+   - Subtraction never produces a negative answer (operands are ordered).
+   - Division always produces a whole number (the dividend is built as
+     divisor × quotient, both drawn from the chosen range).
+   ================================================================== */
+const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+function generateProblem() {
+  const enabled = OPERATIONS.filter((o) => o.enabled);
+  const op = enabled[randInt(0, enabled.length - 1)];
+  let a, b, answer;
+
+  switch (op.key) {
+    case "add":
+      a = randInt(op.min, op.max);
+      b = randInt(op.min, op.max);
+      answer = a + b;
+      break;
+    case "sub":
+      a = randInt(op.min, op.max);
+      b = randInt(op.min, op.max);
+      if (b > a) [a, b] = [b, a]; // keep the answer >= 0
+      answer = a - b;
+      break;
+    case "mul":
+      a = randInt(op.min, op.max);
+      b = randInt(op.min, op.max);
+      answer = a * b;
+      break;
+    case "div": {
+      const divisor = Math.max(1, randInt(op.min, op.max)); // never divide by 0
+      const quotient = randInt(op.min, op.max);
+      a = divisor * quotient;
+      b = divisor;
+      answer = quotient;
+      break;
+    }
+  }
+  return { text: `${a} ${op.symbol} ${b}`, answer };
+}
+
+/* ==================================================================
+   GAME LOOP
+   ================================================================== */
+function startRound() {
+  state.solved = 0;
+  state.wrongAttempts = 0;
+  state.solveTimes = [];
+  state.timeLeft = state.timeLimit;
+
+  $("scoreLabel").textContent = "0";
+  updateTimerUI();
+  showScreen("game");
+  nextProblem();
+
+  state.timerId = setInterval(() => {
+    state.timeLeft--;
+    updateTimerUI();
+    if (state.timeLeft <= 0) endRound();
+  }, 1000);
+}
+
+function updateTimerUI() {
+  const m = Math.floor(state.timeLeft / 60);
+  const s = state.timeLeft % 60;
+  const label = $("timerLabel");
+  label.textContent = `⏱ ${m}:${String(s).padStart(2, "0")}`;
+  label.classList.toggle("low", state.timeLeft <= 10);
+  $("timeFill").style.width = (state.timeLeft / state.timeLimit) * 100 + "%";
+}
+
+function nextProblem() {
+  state.current = generateProblem();
+  state.problemStart = performance.now();
+  const el = $("problemText");
+  el.textContent = state.current.text;
+  // Retrigger the pop-in animation.
+  el.style.animation = "none";
+  void el.offsetWidth;
+  el.style.animation = "";
+  const input = $("answerInput");
+  input.value = "";
+  input.focus();
+}
+
+/*
+ * Auto-advance: checked on every keystroke. The answer is correct the
+ * instant the typed number matches. A wrong attempt is only counted once
+ * the typed value has at least as many digits as the answer (so typing
+ * "1" on the way to "12" is not penalized).
+ */
+$("answerInput").addEventListener("input", (e) => {
+  const input = e.target;
+  input.value = input.value.replace(/[^0-9]/g, ""); // digits only
+  if (input.value === "") return;
+
+  const typed = parseInt(input.value, 10);
+  const answer = state.current.answer;
+
+  if (typed === answer) {
+    state.solved++;
+    state.solveTimes.push((performance.now() - state.problemStart) / 1000);
+    $("scoreLabel").textContent = state.solved;
+    nextProblem();
+  } else if (input.value.length >= String(answer).length) {
+    state.wrongAttempts++;
+    input.classList.add("shake");
+    setTimeout(() => input.classList.remove("shake"), 320);
+    input.value = ""; // clear so the user can retype quickly
+  }
+});
+
+$("quitBtn").addEventListener("click", endRound);
+
+/* ==================================================================
+   RESULTS + SAVING TO SUPABASE
+   ================================================================== */
+function endRound() {
+  clearInterval(state.timerId);
+  state.timerId = null;
+  $("answerInput").blur();
+
+  const attempts = state.solved + state.wrongAttempts;
+  const accuracy = attempts > 0 ? Math.round((state.solved / attempts) * 100) : 0;
+  const avgTime = state.solveTimes.length
+    ? state.solveTimes.reduce((a, b) => a + b, 0) / state.solveTimes.length
+    : 0;
+  const fastest = state.solveTimes.length ? Math.min(...state.solveTimes) : null;
+
+  state.lastResults = {
+    operations: OPERATIONS.filter((o) => o.enabled).map((o) => o.key),
+    time_limit: state.timeLimit,
+    total_solved: state.solved,
+    accuracy_pct: accuracy,
+    avg_time_secs: Number(avgTime.toFixed(2)),
+  };
+
+  $("rSolved").textContent = state.solved;
+  $("rAccuracy").textContent = accuracy + "%";
+  $("rAvg").textContent = avgTime ? avgTime.toFixed(1) + "s" : "—";
+  $("rFastest").textContent = fastest !== null ? fastest.toFixed(1) + "s" : "—";
+  $("resultsSub").textContent =
+    `${state.timeLimit}s round · ${state.lastResults.operations.join(", ")}`;
+
+  showScreen("results");
+  saveSession(state.lastResults);
+}
+
+async function saveSession(results) {
+  const status = $("saveStatus");
+  status.className = "save-status";
+
+  if (!sb) {
+    status.classList.add("err");
+    status.textContent = "Not saved — add your Supabase URL and anon key at the top of the file.";
+    return;
+  }
+
+  status.textContent = "Saving session…";
+  try {
+    const { error } = await sb.from("sessions").insert(results);
+    if (error) throw error;
+    status.classList.add("ok");
+    status.textContent = "✓ Session saved";
+    state.sessionsCache = null; // force a fresh fetch on the stats screen
+  } catch (err) {
+    console.error("Supabase save failed:", err);
+    status.classList.add("err");
+    status.textContent = "Couldn't save this session — check your connection.";
+  }
+}
+
+$("againBtn").addEventListener("click", () => showScreen("settings"));
+
+/* ==================================================================
+   STATS SCREEN + CHART
+   ================================================================== */
+$("statsBtn").addEventListener("click", openStats);
+$("resultsStatsBtn").addEventListener("click", openStats);
+$("statsBackBtn").addEventListener("click", () => {
+  // Return to results if a round was just played, otherwise to settings.
+  showScreen(state.lastResults ? "results" : "settings");
+});
+
+document.querySelectorAll(".metric-btn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".metric-btn").forEach((b) => b.classList.remove("selected"));
+    btn.classList.add("selected");
+    state.chartMetric = btn.dataset.metric;
+    if (state.sessionsCache) renderChart(state.sessionsCache);
+  });
+});
+
+async function openStats() {
+  showScreen("stats");
+  const empty = $("chartEmpty");
+
+  if (!sb) {
+    empty.style.display = "flex";
+    empty.textContent = "Connect Supabase to track your progress over time.";
+    return;
+  }
+
+  if (!state.sessionsCache) {
+    empty.style.display = "flex";
+    empty.textContent = "Loading…";
+    try {
+      const { data, error } = await sb
+        .from("sessions")
+        .select("created_at,total_solved,accuracy_pct")
+        .order("created_at", { ascending: true })
+        .limit(200);
+      if (error) throw error;
+      state.sessionsCache = data || [];
+    } catch (err) {
+      console.error("Supabase fetch failed:", err);
+      empty.textContent = "Couldn't load your sessions — check your connection.";
+      return;
+    }
+  }
+
+  if (state.sessionsCache.length === 0) {
+    empty.style.display = "flex";
+    empty.textContent = "No sessions yet. Play a round and it will show up here!";
+    renderSummary([]);
+    return;
+  }
+
+  empty.style.display = "none";
+  renderChart(state.sessionsCache);
+  renderSummary(state.sessionsCache);
+}
+
+function renderChart(sessions) {
+  const css = getComputedStyle(document.documentElement);
+  const accent = css.getPropertyValue("--accent").trim();
+  const textSoft = css.getPropertyValue("--text-soft").trim();
+  const grid = css.getPropertyValue("--card-border").trim();
+
+  const isAccuracy = state.chartMetric === "accuracy";
+  const labels = sessions.map((s) =>
+    new Date(s.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })
+  );
+  const values = sessions.map((s) => (isAccuracy ? s.accuracy_pct : s.total_solved));
+
+  if (state.chart) state.chart.destroy();
+  state.chart = new Chart($("progressChart"), {
+    type: "line",
+    data: {
+      labels,
+      datasets: [{
+        label: isAccuracy ? "Accuracy %" : "Problems solved",
+        data: values,
+        borderColor: accent,
+        backgroundColor: accent + "22",
+        pointBackgroundColor: accent,
+        pointRadius: 3,
+        borderWidth: 2.5,
+        tension: 0.35,
+        fill: true,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: textSoft, maxTicksLimit: 6 }, grid: { display: false } },
+        y: {
+          beginAtZero: true,
+          max: isAccuracy ? 100 : undefined,
+          ticks: { color: textSoft },
+          grid: { color: grid },
+        },
+      },
+    },
+  });
+}
+
+function renderSummary(sessions) {
+  if (sessions.length === 0) {
+    $("sBest").textContent = $("sAvg").textContent = "—";
+    $("sTotal").textContent = "0";
+    return;
+  }
+  const scores = sessions.map((s) => s.total_solved);
+  $("sBest").textContent = Math.max(...scores);
+  $("sAvg").textContent = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+  $("sTotal").textContent = sessions.length;
+}
+</script>
+</body>
+</html>
