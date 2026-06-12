@@ -26,11 +26,14 @@
   --card: #1A1E27;          /* card surfaces */
   --card-border: #262B36;
   --text: #F2F4F8;          /* primary, high contrast */
-  --text-soft: #8A92A3;     /* muted secondary */
+  --text-soft: #9AA2B3;     /* muted secondary (contrast-checked on dark) */
   --accent: #2DD4BF;        /* electric teal accent */
   --accent-soft: rgba(45, 212, 191, 0.14);
   --accent-glow: rgba(45, 212, 191, 0.35);
+  --success: #34D399;
+  --success-soft: rgba(52, 211, 153, 0.16);
   --danger: #F87171;
+  --danger-soft: rgba(248, 113, 113, 0.16);
   --track: #262B36;         /* progress track / inactive toggle */
   --input-bg: #12141A;
   --shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
@@ -42,11 +45,14 @@
   --card: #FFFFFF;
   --card-border: #E2E6EE;
   --text: #14181F;
-  --text-soft: #6B7383;
+  --text-soft: #5A6273;
   --accent: #0D9488;
   --accent-soft: rgba(13, 148, 136, 0.12);
   --accent-glow: rgba(13, 148, 136, 0.25);
+  --success: #059669;
+  --success-soft: rgba(5, 150, 105, 0.12);
   --danger: #DC2626;
+  --danger-soft: rgba(220, 38, 38, 0.10);
   --track: #D8DDE6;
   --input-bg: #F4F6FA;
   --shadow: 0 8px 30px rgba(20, 24, 31, 0.08);
@@ -76,10 +82,32 @@ body {
   padding: 20px 18px calc(20px + env(safe-area-inset-bottom));
 }
 
+/* Screen-reader-only helper for accessible labels and live regions */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Clear, consistent keyboard focus ring everywhere */
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
 /* Screens fade in quickly when shown */
 .screen { display: none; flex: 1; flex-direction: column; animation: fadeIn 0.18s ease; }
 .screen.active { display: flex; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+}
 
 h1, h2, .problem, .stat-value { font-family: "Space Grotesk", "Inter", sans-serif; }
 
@@ -129,6 +157,28 @@ h1, h2, .problem, .stat-value { font-family: "Space Grotesk", "Inter", sans-seri
   margin: 6px 4px 10px;
 }
 
+/* Segmented control, reused for difficulty + time limit */
+.segment { display: flex; gap: 8px; margin-bottom: 22px; }
+.seg-btn {
+  flex: 1;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  color: var(--text-soft);
+  border-radius: 12px;
+  padding: 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.seg-btn[aria-pressed="true"] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: 0 0 14px var(--accent-glow);
+}
+
 .ops-card {
   background: var(--card);
   border: 1px solid var(--card-border);
@@ -163,13 +213,13 @@ h1, h2, .problem, .stat-value { font-family: "Space Grotesk", "Inter", sans-seri
 
 /* Toggle switch */
 .toggle { position: relative; width: 48px; height: 28px; flex-shrink: 0; }
-.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle input { position: absolute; opacity: 0; width: 48px; height: 28px; margin: 0; cursor: pointer; }
 .toggle .slider {
   position: absolute; inset: 0;
   background: var(--track);
   border-radius: 999px;
-  cursor: pointer;
   transition: background 0.2s;
+  pointer-events: none;
 }
 .toggle .slider::before {
   content: "";
@@ -183,6 +233,7 @@ h1, h2, .problem, .stat-value { font-family: "Space Grotesk", "Inter", sans-seri
 }
 .toggle input:checked + .slider { background: var(--accent); box-shadow: 0 0 12px var(--accent-glow); }
 .toggle input:checked + .slider::before { transform: translateX(20px); }
+.toggle input:focus-visible + .slider { outline: 3px solid var(--accent); outline-offset: 2px; }
 
 /* Min/Max range row, shown only when the operation is enabled */
 .op-range {
@@ -208,28 +259,6 @@ h1, h2, .problem, .stat-value { font-family: "Space Grotesk", "Inter", sans-seri
 }
 .range-input:focus { outline: none; border-color: var(--accent); }
 .range-dash { color: var(--text-soft); }
-
-/* Time limit pills */
-.time-pills { display: flex; gap: 8px; margin-bottom: 26px; }
-.time-pill {
-  flex: 1;
-  background: var(--card);
-  border: 1px solid var(--card-border);
-  color: var(--text-soft);
-  border-radius: 12px;
-  padding: 12px 0;
-  font-size: 14px;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-.time-pill.selected {
-  background: var(--accent-soft);
-  border-color: var(--accent);
-  color: var(--accent);
-  box-shadow: 0 0 14px var(--accent-glow);
-}
 
 /* Primary button */
 .btn-primary {
@@ -263,6 +292,14 @@ h1, h2, .problem, .stat-value { font-family: "Space Grotesk", "Inter", sans-seri
   margin-top: 10px;
 }
 .btn-secondary:hover { border-color: var(--accent); }
+
+.best-line {
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-soft);
+  margin: 14px 0 10px;
+}
+.best-line strong { color: var(--text); }
 
 .settings-error {
   color: var(--danger);
@@ -309,8 +346,16 @@ h1, h2, .problem, .stat-value { font-family: "Space Grotesk", "Inter", sans-seri
   font-weight: 700;
   font-size: 15px;
   display: flex; align-items: center; gap: 6px;
+  transition: background 0.2s, border-color 0.2s;
 }
 .score-chip .star { color: var(--accent); }
+/* Quick non-blocking "correct" pulse on the score */
+.score-chip.bump { animation: bump 0.32s ease; }
+@keyframes bump {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.18); background: var(--success-soft); border-color: var(--success); }
+  100% { transform: scale(1); }
+}
 
 .game-center {
   flex: 1;
@@ -323,10 +368,11 @@ h1, h2, .problem, .stat-value { font-family: "Space Grotesk", "Inter", sans-seri
 }
 
 .problem {
-  font-size: clamp(56px, 17vw, 88px);
+  font-size: clamp(56px, 17vw, 92px);
   font-weight: 700;
   letter-spacing: -0.02em;
   text-align: center;
+  line-height: 1.05;
   animation: popIn 0.15s ease;
 }
 @keyframes popIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: none; } }
@@ -346,14 +392,19 @@ h1, h2, .problem, .stat-value { font-family: "Space Grotesk", "Inter", sans-seri
   font-family: "Space Grotesk", sans-serif;
   text-align: center;
   caret-color: var(--accent);
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 .answer-input:focus { outline: none; }
 
-/* Wrong-answer shake */
+/* Instant feedback states */
+.answer-input.correct {
+  border-color: var(--success);
+  box-shadow: 0 0 20px var(--success-soft);
+}
 .answer-input.shake {
   animation: shake 0.3s ease;
   border-color: var(--danger);
-  box-shadow: 0 0 18px rgba(248, 113, 113, 0.3);
+  box-shadow: 0 0 18px var(--danger-soft);
 }
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
@@ -376,7 +427,22 @@ h1, h2, .problem, .stat-value { font-family: "Space Grotesk", "Inter", sans-seri
    RESULTS / STATS
    ============================================================ */
 .results-title { font-size: 26px; font-weight: 700; text-align: center; margin: 8px 0 4px; }
-.results-sub { color: var(--text-soft); text-align: center; font-size: 14px; margin-bottom: 20px; }
+.results-sub { color: var(--text-soft); text-align: center; font-size: 14px; margin-bottom: 8px; }
+
+.best-badge {
+  display: none;
+  text-align: center;
+  font-weight: 700;
+  color: var(--success);
+  background: var(--success-soft);
+  border: 1px solid var(--success);
+  border-radius: 999px;
+  padding: 6px 14px;
+  width: fit-content;
+  margin: 0 auto 16px;
+  font-size: 14px;
+}
+.best-badge.show { display: block; animation: popIn 0.3s ease; }
 
 .stat-grid {
   display: grid;
@@ -400,7 +466,7 @@ h1, h2, .problem, .stat-value { font-family: "Space Grotesk", "Inter", sans-seri
   min-height: 20px;
   margin-bottom: 14px;
 }
-.save-status.ok { color: var(--accent); }
+.save-status.ok { color: var(--success); }
 .save-status.err { color: var(--danger); }
 
 /* Chart card */
@@ -430,7 +496,7 @@ h1, h2, .problem, .stat-value { font-family: "Space Grotesk", "Inter", sans-seri
   border-radius: 8px;
   cursor: pointer;
 }
-.metric-btn.selected { background: var(--accent); color: #06211D; }
+.metric-btn[aria-pressed="true"] { background: var(--accent); color: #06211D; }
 
 .chart-wrap { position: relative; height: 220px; }
 .chart-empty {
@@ -463,42 +529,58 @@ h1, h2, .problem, .stat-value { font-family: "Space Grotesk", "Inter", sans-seri
   <header class="topbar">
     <div class="brand">Math<span>Flow</span></div>
     <div class="topbar-actions">
-      <button class="icon-btn" id="statsBtn" title="Stats" aria-label="Stats">📈</button>
-      <button class="icon-btn" id="themeBtn" title="Toggle light / dark mode" aria-label="Toggle theme">☀️</button>
+      <button class="icon-btn" id="statsBtn" title="Stats" aria-label="View progress stats">📈</button>
+      <button class="icon-btn" id="themeBtn" title="Toggle light / dark mode" aria-label="Toggle light or dark theme">☀️</button>
     </div>
   </header>
 
-  <!-- ===================== SETTINGS SCREEN ===================== -->
-  <section class="screen active" id="screen-settings">
-    <div class="section-label"><span>Operation</span><span>Min — Max</span></div>
+  <!-- Visually-hidden live region announcing correct / incorrect answers -->
+  <div class="sr-only" id="feedbackLive" role="status" aria-live="assertive"></div>
 
+  <main>
+  <!-- ===================== SETTINGS SCREEN ===================== -->
+  <section class="screen active" id="screen-settings" aria-labelledby="settingsHeading">
+    <h1 id="settingsHeading" class="sr-only">Game settings</h1>
+
+    <div class="section-label" id="diffLabel"><span>Difficulty</span></div>
+    <div class="segment" id="difficultyPills" role="group" aria-labelledby="diffLabel">
+      <button class="seg-btn" data-diff="easy"   aria-pressed="false">Easy</button>
+      <button class="seg-btn" data-diff="medium" aria-pressed="true">Medium</button>
+      <button class="seg-btn" data-diff="hard"   aria-pressed="false">Hard</button>
+      <button class="seg-btn" data-diff="custom" aria-pressed="false">Custom</button>
+    </div>
+
+    <div class="section-label"><span>Operation</span><span>Min — Max</span></div>
     <div class="ops-card" id="opsCard">
       <!-- Operation rows are generated by JS from the OPERATIONS config -->
     </div>
 
-    <div class="section-label"><span>Time limit</span></div>
-    <div class="time-pills" id="timePills">
-      <button class="time-pill" data-secs="30">30s</button>
-      <button class="time-pill selected" data-secs="60">60s</button>
-      <button class="time-pill" data-secs="120">2m</button>
-      <button class="time-pill" data-secs="300">5m</button>
+    <div class="section-label" id="timeLabel"><span>Time limit</span></div>
+    <div class="segment" id="timePills" role="group" aria-labelledby="timeLabel">
+      <button class="seg-btn" data-secs="30"  aria-pressed="false">30s</button>
+      <button class="seg-btn" data-secs="60"  aria-pressed="true">60s</button>
+      <button class="seg-btn" data-secs="120" aria-pressed="false">2m</button>
+      <button class="seg-btn" data-secs="300" aria-pressed="false">5m</button>
     </div>
 
+    <p class="best-line" id="bestLine"></p>
+
     <button class="btn-primary" id="startBtn">Start</button>
-    <div class="settings-error" id="settingsError"></div>
+    <div class="settings-error" id="settingsError" role="alert"></div>
   </section>
 
   <!-- ===================== GAME SCREEN ===================== -->
-  <section class="screen" id="screen-game">
+  <section class="screen" id="screen-game" aria-labelledby="gameHeading">
+    <h1 id="gameHeading" class="sr-only">Math round in progress</h1>
     <div class="game-top">
-      <div class="timer" id="timerLabel">⏱ 0:60</div>
-      <div class="time-track"><div class="time-fill" id="timeFill"></div></div>
-      <div class="score-chip"><span class="star">★</span><span id="scoreLabel">0</span></div>
+      <div class="timer" id="timerLabel" role="timer" aria-label="Time remaining">⏱ 0:60</div>
+      <div class="time-track" aria-hidden="true"><div class="time-fill" id="timeFill"></div></div>
+      <div class="score-chip"><span class="star" aria-hidden="true">★</span><span id="scoreLabel" aria-label="Score">0</span></div>
     </div>
 
     <div class="game-center">
-      <div class="problem" id="problemText">7 × 8</div>
-      <div class="prompt-hint">What is the answer?</div>
+      <div class="problem" id="problemText" aria-live="polite" aria-atomic="true">7 × 8</div>
+      <label class="prompt-hint" for="answerInput" id="answerLabel">What is the answer?</label>
       <input
         class="answer-input"
         id="answerInput"
@@ -508,6 +590,7 @@ h1, h2, .problem, .stat-value { font-family: "Space Grotesk", "Inter", sans-seri
         autocomplete="off"
         autocorrect="off"
         spellcheck="false"
+        aria-labelledby="answerLabel"
       />
     </div>
 
@@ -515,9 +598,10 @@ h1, h2, .problem, .stat-value { font-family: "Space Grotesk", "Inter", sans-seri
   </section>
 
   <!-- ===================== RESULTS SCREEN ===================== -->
-  <section class="screen" id="screen-results">
-    <div class="results-title">Round complete</div>
-    <div class="results-sub" id="resultsSub"></div>
+  <section class="screen" id="screen-results" aria-labelledby="resultsHeading">
+    <h1 id="resultsHeading" class="results-title">Round complete</h1>
+    <p class="results-sub" id="resultsSub"></p>
+    <div class="best-badge" id="bestBadge">🏆 New best score!</div>
 
     <div class="stat-grid">
       <div class="stat-card"><div class="stat-value" id="rSolved">0</div><div class="stat-label">Problems solved</div></div>
@@ -526,29 +610,29 @@ h1, h2, .problem, .stat-value { font-family: "Space Grotesk", "Inter", sans-seri
       <div class="stat-card"><div class="stat-value" id="rFastest">—</div><div class="stat-label">Fastest answer</div></div>
     </div>
 
-    <div class="save-status" id="saveStatus"></div>
+    <div class="save-status" id="saveStatus" role="status" aria-live="polite"></div>
 
     <button class="btn-primary" id="againBtn">Play again</button>
     <button class="btn-secondary" id="resultsStatsBtn">View progress</button>
   </section>
 
   <!-- ===================== STATS SCREEN ===================== -->
-  <section class="screen" id="screen-stats">
+  <section class="screen" id="screen-stats" aria-labelledby="statsHeading">
     <div style="display:flex; align-items:center; margin-bottom: 14px;">
-      <button class="back-btn" id="statsBackBtn" aria-label="Back">←</button>
-      <h2 style="font-size:20px;">Your progress</h2>
+      <button class="back-btn" id="statsBackBtn" aria-label="Go back">←</button>
+      <h1 id="statsHeading" style="font-size:20px;">Your progress</h1>
     </div>
 
     <div class="chart-card">
       <div class="chart-head">
         <div class="chart-title">Over time</div>
-        <div class="metric-toggle">
-          <button class="metric-btn selected" data-metric="solved">Solved</button>
-          <button class="metric-btn" data-metric="accuracy">Accuracy</button>
+        <div class="metric-toggle" role="group" aria-label="Chart metric">
+          <button class="metric-btn" data-metric="solved" aria-pressed="true">Solved</button>
+          <button class="metric-btn" data-metric="accuracy" aria-pressed="false">Accuracy</button>
         </div>
       </div>
       <div class="chart-wrap">
-        <canvas id="progressChart"></canvas>
+        <canvas id="progressChart" aria-label="Line chart of your performance over time" role="img"></canvas>
         <div class="chart-empty" id="chartEmpty" style="display:none;"></div>
       </div>
     </div>
@@ -559,6 +643,7 @@ h1, h2, .problem, .stat-value { font-family: "Space Grotesk", "Inter", sans-seri
       <div class="summary-card"><div class="summary-value" id="sTotal">—</div><div class="summary-label">Sessions</div></div>
     </div>
   </section>
+  </main>
 
 </div>
 
@@ -567,15 +652,21 @@ h1, h2, .problem, .stat-value { font-family: "Space Grotesk", "Inter", sans-seri
    SUPABASE CONFIG
    👉 PASTE YOUR OWN VALUES HERE.
    Find them in your Supabase dashboard under
-   Project Settings → API (Project URL and the "anon public" key).
+   Project Settings → API:
+     • SUPABASE_URL  = your Project URL
+     • SUPABASE_KEY  = the "anon public" key OR a "publishable" key
+                       (sb_publishable_...). Both are safe to ship in
+                       client code — your data is protected by the
+                       Row Level Security policies in the README, not
+                       by hiding this key.
    ================================================================== */
-const SUPABASE_URL = "PASTE_YOUR_SUPABASE_URL_HERE";
-const SUPABASE_ANON_KEY = "PASTE_YOUR_SUPABASE_ANON_KEY_HERE";
+const SUPABASE_URL = "https://zciulgqkqusjxomyapcz.supabase.co";
+const SUPABASE_KEY = "sb_publishable_t3LKmsyqW22dT4ZMlKWQkg_UIyTziIe";
 
-// The Supabase client is only created if real-looking values were pasted in,
+// The Supabase client is only created if a real URL was pasted in,
 // so the app still works (without saving) before you configure it.
 const sb = SUPABASE_URL.startsWith("http")
-  ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  ? supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
   : null;
 
 /* ==================================================================
@@ -584,16 +675,25 @@ const sb = SUPABASE_URL.startsWith("http")
    of the problem generator.
    ================================================================== */
 const OPERATIONS = [
-  { key: "add", name: "Addition",       symbol: "+", cls: "add", enabled: true,  min: 1, max: 20 },
-  { key: "sub", name: "Subtraction",    symbol: "−", cls: "sub", enabled: true,  min: 1, max: 20 },
-  { key: "mul", name: "Multiplication", symbol: "×", cls: "mul", enabled: true,  min: 1, max: 12 },
-  { key: "div", name: "Division",       symbol: "÷", cls: "div", enabled: true,  min: 1, max: 12 },
+  { key: "add", name: "Addition",       symbol: "+", spoken: "plus",        cls: "add", enabled: true, min: 1, max: 20 },
+  { key: "sub", name: "Subtraction",    symbol: "−", spoken: "minus",       cls: "sub", enabled: true, min: 1, max: 20 },
+  { key: "mul", name: "Multiplication", symbol: "×", spoken: "times",       cls: "mul", enabled: true, min: 1, max: 12 },
+  { key: "div", name: "Division",       symbol: "÷", spoken: "divided by",  cls: "div", enabled: true, min: 1, max: 12 },
 ];
+
+/* Difficulty presets set the min/max range for every operation.
+   "custom" lets the player edit the ranges by hand. */
+const DIFFICULTIES = {
+  easy:   { add: [1, 10],  sub: [1, 10],  mul: [1, 6],   div: [1, 6]  },
+  medium: { add: [1, 20],  sub: [1, 20],  mul: [1, 12],  div: [1, 12] },
+  hard:   { add: [10, 100], sub: [10, 100], mul: [2, 20], div: [2, 20] },
+};
 
 /* ==================================================================
    STATE
    ================================================================== */
 const state = {
+  difficulty: "medium",
   timeLimit: 60,        // seconds, selected on the settings screen
   timeLeft: 0,
   timerId: null,
@@ -616,6 +716,26 @@ const $ = (id) => document.getElementById(id);
 function showScreen(name) {
   document.querySelectorAll(".screen").forEach((s) => s.classList.remove("active"));
   $("screen-" + name).classList.add("active");
+}
+
+// Update aria-pressed across a group of segmented buttons.
+function setPressed(buttons, matchFn) {
+  buttons.forEach((b) => b.setAttribute("aria-pressed", matchFn(b) ? "true" : "false"));
+}
+
+/* ==================================================================
+   LOCAL BEST SCORE (persisted in localStorage, per difficulty + time)
+   ================================================================== */
+function bestKey() { return `mathflow-best:${state.difficulty}:${state.timeLimit}`; }
+function getBest() { return parseInt(localStorage.getItem(bestKey()) || "0", 10); }
+function setBest(score) { localStorage.setItem(bestKey(), String(score)); }
+
+function updateBestLine() {
+  const best = getBest();
+  const label = state.difficulty[0].toUpperCase() + state.difficulty.slice(1);
+  $("bestLine").innerHTML = best > 0
+    ? `Best for <strong>${label} · ${state.timeLimit}s</strong>: <strong>${best}</strong>`
+    : `No best score yet for <strong>${label} · ${state.timeLimit}s</strong> — set one!`;
 }
 
 /* ==================================================================
@@ -647,16 +767,16 @@ function buildSettings() {
     row.className = "op-row" + (op.enabled ? "" : " disabled");
     row.innerHTML = `
       <div class="op-head">
-        <div class="op-icon ${op.cls}">${op.symbol}</div>
-        <div class="op-name">${op.name}</div>
+        <div class="op-icon ${op.cls}" aria-hidden="true">${op.symbol}</div>
+        <div class="op-name" id="op-name-${op.key}">${op.name}</div>
         <label class="toggle">
-          <input type="checkbox" ${op.enabled ? "checked" : ""} data-op="${op.key}">
+          <input type="checkbox" ${op.enabled ? "checked" : ""} data-op="${op.key}" aria-labelledby="op-name-${op.key}">
           <span class="slider"></span>
         </label>
       </div>
       <div class="op-range">
         <input class="range-input" type="number" inputmode="numeric" min="0" value="${op.min}" data-op="${op.key}" data-bound="min" aria-label="${op.name} minimum">
-        <span class="range-dash">—</span>
+        <span class="range-dash" aria-hidden="true">—</span>
         <input class="range-input" type="number" inputmode="numeric" min="1" value="${op.max}" data-op="${op.key}" data-bound="max" aria-label="${op.name} maximum">
       </div>`;
     card.appendChild(row);
@@ -669,19 +789,37 @@ function buildSettings() {
     row.querySelectorAll(".range-input").forEach((input) => {
       input.addEventListener("change", (e) => {
         op[e.target.dataset.bound] = parseInt(e.target.value, 10) || 1;
+        // Editing a range by hand means we're no longer on a preset.
+        setDifficulty("custom", { keepRanges: true });
       });
     });
   }
 }
-buildSettings();
 
-// Time-limit pills
+// Apply a difficulty preset (or switch to custom). keepRanges avoids
+// overwriting the values the user just typed.
+function setDifficulty(diff, { keepRanges = false } = {}) {
+  state.difficulty = diff;
+  if (diff !== "custom" && !keepRanges) {
+    const preset = DIFFICULTIES[diff];
+    for (const op of OPERATIONS) [op.min, op.max] = preset[op.key];
+    buildSettings();
+  }
+  setPressed($("difficultyPills").querySelectorAll(".seg-btn"), (b) => b.dataset.diff === diff);
+  updateBestLine();
+}
+
+$("difficultyPills").addEventListener("click", (e) => {
+  const btn = e.target.closest(".seg-btn");
+  if (btn) setDifficulty(btn.dataset.diff);
+});
+
 $("timePills").addEventListener("click", (e) => {
-  const pill = e.target.closest(".time-pill");
-  if (!pill) return;
-  document.querySelectorAll(".time-pill").forEach((p) => p.classList.remove("selected"));
-  pill.classList.add("selected");
-  state.timeLimit = parseInt(pill.dataset.secs, 10);
+  const btn = e.target.closest(".seg-btn");
+  if (!btn) return;
+  state.timeLimit = parseInt(btn.dataset.secs, 10);
+  setPressed($("timePills").querySelectorAll(".seg-btn"), (b) => b === btn);
+  updateBestLine();
 });
 
 $("startBtn").addEventListener("click", () => {
@@ -696,6 +834,9 @@ $("startBtn").addEventListener("click", () => {
   }
   startRound();
 });
+
+buildSettings();
+setDifficulty("medium");
 
 /* ==================================================================
    PROBLEM GENERATION
@@ -736,7 +877,11 @@ function generateProblem() {
       break;
     }
   }
-  return { text: `${a} ${op.symbol} ${b}`, answer };
+  return {
+    text: `${a} ${op.symbol} ${b}`,
+    spoken: `${a} ${op.spoken} ${b}`,
+    answer,
+  };
 }
 
 /* ==================================================================
@@ -765,6 +910,7 @@ function updateTimerUI() {
   const s = state.timeLeft % 60;
   const label = $("timerLabel");
   label.textContent = `⏱ ${m}:${String(s).padStart(2, "0")}`;
+  label.setAttribute("aria-label", `${state.timeLeft} seconds remaining`);
   label.classList.toggle("low", state.timeLeft <= 10);
   $("timeFill").style.width = (state.timeLeft / state.timeLimit) * 100 + "%";
 }
@@ -774,23 +920,56 @@ function nextProblem() {
   state.problemStart = performance.now();
   const el = $("problemText");
   el.textContent = state.current.text;
+  el.setAttribute("aria-label", state.current.spoken); // screen readers say "7 times 8"
   // Retrigger the pop-in animation.
   el.style.animation = "none";
   void el.offsetWidth;
   el.style.animation = "";
   const input = $("answerInput");
   input.value = "";
+  input.classList.remove("correct", "shake");
   input.focus();
 }
 
+function announce(msg) { $("feedbackLive").textContent = msg; }
+
+function onCorrect() {
+  state.solved++;
+  state.solveTimes.push((performance.now() - state.problemStart) / 1000);
+  $("scoreLabel").textContent = state.solved;
+
+  // Quick, non-blocking positive feedback.
+  const chip = document.querySelector(".score-chip");
+  chip.classList.remove("bump");
+  void chip.offsetWidth;
+  chip.classList.add("bump");
+  $("answerInput").classList.add("correct");
+  announce("Correct");
+
+  nextProblem();
+}
+
+function onWrong() {
+  state.wrongAttempts++;
+  const input = $("answerInput");
+  input.classList.remove("correct");
+  input.classList.add("shake");
+  setTimeout(() => input.classList.remove("shake"), 320);
+  input.value = ""; // clear so the user can retype quickly
+  announce("Not quite, try again");
+}
+
 /*
- * Auto-advance: checked on every keystroke. The answer is correct the
- * instant the typed number matches. A wrong attempt is only counted once
- * the typed value has at least as many digits as the answer (so typing
- * "1" on the way to "12" is not penalized).
+ * Answer checking. Runs on every keystroke for instant auto-advance,
+ * and also on Enter (forceCheck = true) so the player can submit
+ * manually and get feedback even on a partial wrong answer.
+ *
+ * A wrong attempt is only counted once the typed value has at least as
+ * many digits as the answer (so typing "1" on the way to "12" is not
+ * penalized) — unless Enter was pressed, which forces an immediate check.
  */
-$("answerInput").addEventListener("input", (e) => {
-  const input = e.target;
+function checkAnswer(forceCheck) {
+  const input = $("answerInput");
   input.value = input.value.replace(/[^0-9]/g, ""); // digits only
   if (input.value === "") return;
 
@@ -798,15 +977,17 @@ $("answerInput").addEventListener("input", (e) => {
   const answer = state.current.answer;
 
   if (typed === answer) {
-    state.solved++;
-    state.solveTimes.push((performance.now() - state.problemStart) / 1000);
-    $("scoreLabel").textContent = state.solved;
-    nextProblem();
-  } else if (input.value.length >= String(answer).length) {
-    state.wrongAttempts++;
-    input.classList.add("shake");
-    setTimeout(() => input.classList.remove("shake"), 320);
-    input.value = ""; // clear so the user can retype quickly
+    onCorrect();
+  } else if (forceCheck || input.value.length >= String(answer).length) {
+    onWrong();
+  }
+}
+
+$("answerInput").addEventListener("input", () => checkAnswer(false));
+$("answerInput").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    checkAnswer(true); // press Enter to submit
   }
 });
 
@@ -835,12 +1016,18 @@ function endRound() {
     avg_time_secs: Number(avgTime.toFixed(2)),
   };
 
+  // Local best-score check (per difficulty + time limit).
+  const prevBest = getBest();
+  const isNewBest = state.solved > prevBest;
+  if (isNewBest) setBest(state.solved);
+  $("bestBadge").classList.toggle("show", isNewBest && state.solved > 0);
+
   $("rSolved").textContent = state.solved;
   $("rAccuracy").textContent = accuracy + "%";
   $("rAvg").textContent = avgTime ? avgTime.toFixed(1) + "s" : "—";
   $("rFastest").textContent = fastest !== null ? fastest.toFixed(1) + "s" : "—";
   $("resultsSub").textContent =
-    `${state.timeLimit}s round · ${state.lastResults.operations.join(", ")}`;
+    `${state.difficulty} · ${state.timeLimit}s · ${state.lastResults.operations.join(", ")}`;
 
   showScreen("results");
   saveSession(state.lastResults);
@@ -852,7 +1039,7 @@ async function saveSession(results) {
 
   if (!sb) {
     status.classList.add("err");
-    status.textContent = "Not saved — add your Supabase URL and anon key at the top of the file.";
+    status.textContent = "Not saved — add your Supabase URL and key at the top of the file.";
     return;
   }
 
@@ -870,7 +1057,7 @@ async function saveSession(results) {
   }
 }
 
-$("againBtn").addEventListener("click", () => showScreen("settings"));
+$("againBtn").addEventListener("click", () => { updateBestLine(); showScreen("settings"); });
 
 /* ==================================================================
    STATS SCREEN + CHART
@@ -884,8 +1071,7 @@ $("statsBackBtn").addEventListener("click", () => {
 
 document.querySelectorAll(".metric-btn").forEach((btn) => {
   btn.addEventListener("click", () => {
-    document.querySelectorAll(".metric-btn").forEach((b) => b.classList.remove("selected"));
-    btn.classList.add("selected");
+    setPressed(document.querySelectorAll(".metric-btn"), (b) => b === btn);
     state.chartMetric = btn.dataset.metric;
     if (state.sessionsCache) renderChart(state.sessionsCache);
   });
