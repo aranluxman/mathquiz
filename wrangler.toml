@@ -1,0 +1,7 @@
+name = "mathflow-arcade"
+compatibility_date = "2026-06-12"
+pages_build_output_dir = "."
+
+[vars]
+NEXT_PUBLIC_SUPABASE_URL = "https://zciulgqkqusjxomyapcz.supabase.co"
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_t3LKmsyqW22dT4ZMlKWQkg_UIyTziIe"

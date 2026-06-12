@@ -1,0 +1,19 @@
+{
+  "name": "MathFlow Arcade",
+  "short_name": "MathFlow",
+  "description": "A mobile-first arcade of quick brain games with progress, streaks, and installable offline play.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#071016",
+  "theme_color": "#071016",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
