@@ -553,6 +553,313 @@ body.in-game .tabbar { display: none; }
 .wide-btn + .wide-btn { margin-top: 10px; }
 
 @media (min-width: 700px) { .app { max-width: 540px; padding-top: 28px; } }
+
+/* ============================================================
+   MULTIPLAYER — HOME SECTION
+   ============================================================ */
+.mp-section-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin: 24px 2px 12px;
+}
+.mp-section-head h2 { font-size: 18px; font-weight: 700; }
+.mp-badge {
+  display: flex; align-items: center; gap: 5px;
+  background: rgba(167,139,250,0.15); border: 1px solid rgba(167,139,250,0.4);
+  color: #A78BFA; border-radius: 99px; padding: 5px 11px; font-size: 12px; font-weight: 700;
+}
+.mp-mode-list { display: flex; flex-direction: column; gap: 10px; }
+.mp-mode-row {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 16px; padding: 12px 14px;
+  cursor: pointer; transition: border-color 0.15s, transform 0.1s;
+  text-align: left; width: 100%;
+}
+.mp-mode-row:hover { border-color: #A78BFA; }
+.mp-mode-row:active { transform: scale(0.99); }
+.mp-player-tag {
+  background: rgba(167,139,250,0.15); border: 1px solid rgba(167,139,250,0.35);
+  color: #A78BFA; border-radius: 99px; padding: 3px 8px;
+  font-size: 11px; font-weight: 700; white-space: nowrap;
+}
+.mp-play-btn {
+  width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+  background: #7C3AED; color: #fff; font-size: 13px;
+  border: none; display: flex; align-items: center; justify-content: center;
+}
+.mp-play-btn::before { content: "▶"; margin-left: 2px; }
+
+/* ============================================================
+   PLAYER SETUP OVERLAY
+   ============================================================ */
+.setup-overlay {
+  display: none; position: fixed; inset: 0; z-index: 200;
+  background: color-mix(in srgb, var(--bg) 85%, transparent);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  align-items: flex-end; justify-content: center; padding: 0 0 env(safe-area-inset-bottom);
+}
+.setup-overlay.show { display: flex; }
+.setup-sheet {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 24px 24px 0 0; padding: 22px 20px 28px;
+  width: 100%; max-width: 480px; box-shadow: 0 -10px 40px rgba(0,0,0,0.4);
+  animation: slideUp 0.25s ease;
+}
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: none; } }
+.setup-handle { width: 36px; height: 4px; background: var(--border); border-radius: 99px; margin: 0 auto 18px; }
+.setup-title { font-family: "Space Grotesk", sans-serif; font-size: 20px; font-weight: 700; text-align: center; margin-bottom: 6px; }
+.setup-sub { color: var(--text-soft); font-size: 13px; text-align: center; margin-bottom: 18px; }
+.player-count-row { display: flex; gap: 8px; margin-bottom: 18px; }
+.pcount-btn {
+  flex: 1; padding: 12px 8px; border-radius: 12px;
+  background: var(--card2); border: 1.5px solid var(--border);
+  color: var(--text-soft); font-weight: 700; font-size: 15px; cursor: pointer; transition: all 0.12s;
+}
+.pcount-btn.active { background: rgba(167,139,250,0.15); border-color: #A78BFA; color: #A78BFA; }
+.player-name-fields { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+.player-name-wrap { display: flex; align-items: center; gap: 10px; }
+.player-color-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.player-name-input {
+  flex: 1; background: var(--card2); border: 1.5px solid var(--border);
+  color: var(--text); border-radius: 11px; padding: 11px 14px;
+  font-size: 15px; font-weight: 600; font-family: "Space Grotesk", sans-serif;
+}
+.player-name-input:focus { outline: none; border-color: #A78BFA; }
+.setup-start-btn {
+  width: 100%; padding: 15px; background: #7C3AED; color: #fff;
+  border: none; border-radius: 14px; font-size: 16px; font-weight: 700;
+  cursor: pointer; font-family: "Space Grotesk", sans-serif;
+  box-shadow: 0 0 20px rgba(124,58,237,0.35); transition: transform 0.1s;
+}
+.setup-start-btn:active { transform: scale(0.98); }
+.setup-cancel-btn {
+  width: 100%; padding: 12px; background: none; border: 1px solid var(--border);
+  color: var(--text-soft); border-radius: 12px; font-size: 14px; font-weight: 600;
+  cursor: pointer; margin-top: 8px;
+}
+
+/* ============================================================
+   PASS-SCREEN (whose turn)
+   ============================================================ */
+.pass-screen-wrap {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 16px; padding: 20px;
+  text-align: center;
+}
+.pass-avatar {
+  width: 80px; height: 80px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: "Space Grotesk", sans-serif; font-size: 32px; font-weight: 700; color: #fff;
+  box-shadow: 0 0 28px rgba(124,58,237,0.4);
+}
+.pass-name { font-family: "Space Grotesk", sans-serif; font-size: 26px; font-weight: 700; }
+.pass-sub { color: var(--text-soft); font-size: 14px; }
+.pass-tap-hint {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 99px; padding: 10px 24px; font-size: 14px; font-weight: 600; color: var(--text-soft);
+  margin-top: 8px; cursor: pointer; transition: border-color 0.15s;
+}
+.pass-tap-hint:hover { border-color: #A78BFA; color: #A78BFA; }
+
+/* ============================================================
+   FACE-TO-FACE LAYOUT
+   ============================================================ */
+.f2f-screen {
+  flex: 1; display: none; flex-direction: column; overflow: hidden;
+  position: fixed; inset: 0; z-index: 10; background: var(--bg);
+}
+.f2f-screen.active { display: flex; }
+.f2f-half {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  position: relative; padding: 14px;
+}
+.f2f-half.top { transform: rotate(180deg); border-bottom: 2px solid var(--border); }
+.f2f-half.bottom { border-top: none; }
+.f2f-divider {
+  display: flex; align-items: center; justify-content: center;
+  padding: 8px 0; flex-shrink: 0; z-index: 2; position: relative;
+  background: var(--bg);
+}
+.f2f-question {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: clamp(22px, 6vw, 34px); font-weight: 700;
+  text-align: center; margin-bottom: 14px; padding: 0 8px;
+}
+.f2f-score-bar {
+  display: flex; align-items: center; gap: 8px; width: 100%; max-width: 320px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 8px 12px;
+}
+.f2f-score-name { font-size: 13px; font-weight: 700; flex: 1; }
+.f2f-score-num { font-family: "Space Grotesk", sans-serif; font-size: 22px; font-weight: 700; }
+.f2f-answers { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; max-width: 320px; }
+.f2f-answer-btn {
+  padding: 16px 8px; border-radius: 14px;
+  background: var(--card); border: 1.5px solid var(--border);
+  font-family: "Space Grotesk", sans-serif; font-size: 22px; font-weight: 700;
+  cursor: pointer; transition: all 0.1s; color: var(--text);
+}
+.f2f-answer-btn:active { transform: scale(0.97); }
+.f2f-answer-btn.correct { background: var(--accent); border-color: var(--accent); color: var(--on-accent); box-shadow: 0 0 16px var(--accent-glow); }
+.f2f-answer-btn.wrong { background: var(--red-soft); border-color: var(--red); color: var(--red); }
+.f2f-tf-btn {
+  padding: 20px; border-radius: 16px; width: 100%; max-width: 300px;
+  font-family: "Space Grotesk", sans-serif; font-size: 20px; font-weight: 700;
+  cursor: pointer; border: 2px solid var(--border); background: var(--card);
+  color: var(--text); transition: all 0.12s;
+}
+.f2f-tf-btn.true-btn:hover, .f2f-tf-btn.true-btn:focus { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.f2f-tf-btn.false-btn:hover, .f2f-tf-btn.false-btn:focus { border-color: var(--red); background: var(--red-soft); color: var(--red); }
+.f2f-tf-btn.flash-correct { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.f2f-tf-btn.flash-wrong { background: var(--red-soft); border-color: var(--red); color: var(--red); }
+.f2f-center-score {
+  display: flex; align-items: center; gap: 12px;
+  padding: 8px 20px; background: var(--card); border-radius: 99px;
+  border: 1px solid var(--border); font-family: "Space Grotesk", sans-serif;
+}
+.f2f-cs-name { font-size: 14px; font-weight: 700; }
+.f2f-cs-score { font-size: 22px; font-weight: 700; }
+.f2f-cs-divider { width: 1px; height: 24px; background: var(--border); }
+
+/* Tug of war */
+.tug-rope-wrap { width: 100%; max-width: 340px; margin: 10px 0; }
+.tug-rope-track { height: 14px; background: var(--track); border-radius: 99px; position: relative; overflow: hidden; }
+.tug-rope-fill {
+  height: 100%; border-radius: 99px; transition: width 0.3s ease;
+  background: linear-gradient(90deg, #7C3AED, #A78BFA);
+}
+.tug-knot {
+  position: absolute; top: 50%; transform: translate(-50%, -50%);
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--text); border: 3px solid var(--bg); transition: left 0.3s ease;
+}
+.tug-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-soft); margin-top: 5px; font-weight: 600; }
+
+/* Reaction race */
+.f2f-tap-zone {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  width: 100%; border-radius: 18px; cursor: pointer; transition: background 0.15s;
+  user-select: none; -webkit-user-select: none;
+}
+.f2f-tap-zone.ready { background: var(--card); border: 2px solid var(--border); }
+.f2f-tap-zone.go-flash { background: var(--accent); border: 2px solid var(--accent); }
+.f2f-tap-zone.scored { background: var(--accent-soft); border: 2px solid var(--accent); }
+.f2f-tap-zone.too-slow { background: var(--red-soft); border: 2px solid var(--red); }
+.f2f-tap-label { font-family: "Space Grotesk", sans-serif; font-size: 20px; font-weight: 700; }
+
+/* ============================================================
+   MULTIPLAYER SCOREBOARD (results)
+   ============================================================ */
+.mp-podium { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+.mp-podium-row {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 16px; padding: 14px 16px;
+}
+.mp-podium-rank { font-family: "Space Grotesk", sans-serif; font-size: 22px; font-weight: 700; width: 32px; text-align: center; }
+.mp-podium-avatar {
+  width: 42px; height: 42px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: "Space Grotesk", sans-serif; font-size: 18px; font-weight: 700; color: #fff;
+  flex-shrink: 0;
+}
+.mp-podium-name { flex: 1; font-weight: 700; font-size: 15px; }
+.mp-podium-score { font-family: "Space Grotesk", sans-serif; font-size: 22px; font-weight: 700; }
+.mp-podium-row.first { border-color: var(--gold); background: rgba(251,191,36,0.08); }
+
+/* ============================================================
+   IN-GAME PLAYER TRACKER (pass-and-play)
+   ============================================================ */
+.player-hud {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 8px 12px; margin-bottom: 12px;
+}
+.player-hud-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.player-hud-name { font-weight: 700; font-size: 14px; flex: 1; }
+.player-hud-scores { display: flex; gap: 6px; }
+.player-hud-chip {
+  background: var(--card2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 3px 8px; font-size: 12px; font-weight: 600; color: var(--text-soft);
+}
+.player-hud-chip.active { background: rgba(167,139,250,0.15); border-color: #A78BFA; color: #A78BFA; }
+
+/* Hot Potato special */
+.potato-zone {
+  flex: 1; border-radius: 22px; margin-bottom: 14px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 24px; text-align: center;
+  background: linear-gradient(135deg, rgba(251,191,36,0.12), rgba(251,191,36,0.04)), var(--card);
+  border: 2px solid rgba(251,191,36,0.4);
+}
+.potato-timer-big {
+  font-family: "Space Grotesk", sans-serif; font-size: 64px; font-weight: 700;
+  color: var(--gold); line-height: 1; margin-bottom: 8px; transition: color 0.2s;
+}
+.potato-timer-big.urgent { color: var(--red); animation: pulse 0.5s ease infinite alternate; }
+@keyframes pulse { from { transform: scale(1); } to { transform: scale(1.06); } }
+.potato-expr { font-family: "Space Grotesk", sans-serif; font-size: clamp(26px,8vw,38px); font-weight: 700; margin-bottom: 16px; }
+
+/* Dice Dash */
+.dice-row { display: flex; align-items: center; justify-content: center; gap: 16px; margin: 14px 0; }
+.die {
+  width: 72px; height: 72px; border-radius: 16px;
+  background: var(--card2); border: 2px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 36px; cursor: pointer;
+  transition: transform 0.15s, border-color 0.15s;
+  user-select: none;
+}
+.die:active { transform: scale(0.92); }
+.die.rolling { animation: diceRoll 0.4s ease; }
+@keyframes diceRoll {
+  0% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(-15deg) scale(0.9); }
+  75% { transform: rotate(15deg) scale(0.9); }
+  100% { transform: rotate(0deg) scale(1); }
+}
+.dice-op { font-family: "Space Grotesk", sans-serif; font-size: 28px; font-weight: 700; color: var(--accent); }
+.dice-result { font-family: "Space Grotesk", sans-serif; font-size: 52px; font-weight: 700; text-align: center; color: var(--accent); }
+
+/* Survivor */
+.survivor-players { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 14px; }
+.survivor-chip {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 99px; padding: 7px 12px;
+  font-weight: 700; font-size: 13px; transition: all 0.2s;
+}
+.survivor-chip.out {
+  opacity: 0.3; text-decoration: line-through;
+  background: var(--red-soft); border-color: var(--red);
+}
+.survivor-chip-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+/* Speed quiz buzz-in */
+.buzz-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.buzz-btn {
+  padding: 28px 8px; border-radius: 18px; font-family: "Space Grotesk", sans-serif;
+  font-size: 16px; font-weight: 700; cursor: pointer; border: 2px solid transparent;
+  transition: all 0.12s; color: #fff;
+}
+.buzz-btn:active { transform: scale(0.96); }
+.buzz-btn.buzzed { transform: scale(1.04); box-shadow: 0 0 22px rgba(255,255,255,0.2); }
+.buzz-btn:disabled { opacity: 0.3; cursor: default; transform: none; }
+.buzz-question {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 16px; padding: 20px; text-align: center; margin-bottom: 14px;
+}
+.buzz-expr { font-family: "Space Grotesk", sans-serif; font-size: clamp(28px,9vw,44px); font-weight: 700; }
+.buzz-answer-input {
+  background: var(--card2); border: 2px solid #A78BFA;
+  box-shadow: 0 0 14px rgba(167,139,250,0.2);
+  color: var(--text); border-radius: 14px; padding: 14px;
+  font-size: 24px; font-weight: 700; font-family: "Space Grotesk", sans-serif;
+  text-align: center; caret-color: #A78BFA; width: 100%;
+  display: none;
+}
+.buzz-answer-input.show { display: block; }
 </style>
 </head>
 <body>
@@ -588,6 +895,12 @@ body.in-game .tabbar { display: none; }
       <button class="section-link" id="seeAllBtn">See All</button>
     </div>
     <div class="mode-list" id="modeList"><!-- rendered by JS --></div>
+
+    <div class="mp-section-head">
+      <h2>Multiplayer Games</h2>
+      <div class="mp-badge">👥 Offline</div>
+    </div>
+    <div class="mp-mode-list" id="mpModeList"><!-- rendered by JS --></div>
 
     <div class="section-head">
       <h2>Your Progress</h2>
@@ -812,6 +1125,287 @@ body.in-game .tabbar { display: none; }
     </div>
   </section>
 
+  <!-- ============== MP: MATH DUEL (face-to-face) ============== -->
+  <section class="f2f-screen" id="screen-f2f-duel">
+    <div class="f2f-half top" id="duelTopHalf">
+      <div class="f2f-score-bar" id="duelScoreTop">
+        <div class="f2f-score-name" id="duelNameTop">Player 1</div>
+        <div class="f2f-score-num" id="duelScoreNumTop">0</div>
+      </div>
+      <div class="f2f-answers" id="duelAnswersTop" style="margin-top:12px;"></div>
+    </div>
+    <div class="f2f-divider">
+      <div class="f2f-center-score">
+        <div class="f2f-cs-name" id="duelCSName1">P1</div>
+        <div class="f2f-cs-score" id="duelCSScore1">0</div>
+        <div class="f2f-cs-divider"></div>
+        <div class="f2f-cs-score" id="duelCSScore2">0</div>
+        <div class="f2f-cs-name" id="duelCSName2">P2</div>
+      </div>
+    </div>
+    <div class="f2f-half bottom" id="duelBottomHalf">
+      <div class="f2f-question" id="duelQuestion">5 × 7 = ?</div>
+      <div class="f2f-answers" id="duelAnswersBottom"></div>
+      <div class="f2f-score-bar" style="margin-top:12px;" id="duelScoreBottom">
+        <div class="f2f-score-name" id="duelNameBottom">Player 2</div>
+        <div class="f2f-score-num" id="duelScoreNumBottom">0</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== MP: REACTION RACE (face-to-face) ============== -->
+  <section class="f2f-screen" id="screen-f2f-reaction">
+    <div class="f2f-half top" style="gap:10px;">
+      <div class="f2f-score-bar" id="rrScoreTop" style="margin-bottom:8px;">
+        <div class="f2f-score-name" id="rrNameTop">Player 1</div>
+        <div class="f2f-score-num" id="rrWinsTop">0</div>
+      </div>
+      <div class="f2f-tap-zone ready" id="rrZoneTop" style="min-height:80px;">
+        <div class="f2f-tap-label" id="rrLabelTop">Tap!</div>
+      </div>
+    </div>
+    <div class="f2f-divider">
+      <div class="f2f-center-score">
+        <div id="rrCSRound" style="font-size:13px;font-weight:700;color:var(--text-soft);">Round 1 / 7</div>
+        <div class="f2f-cs-divider"></div>
+        <div id="rrCSStatus" style="font-size:13px;font-weight:600;color:var(--accent);">Get Ready</div>
+      </div>
+    </div>
+    <div class="f2f-half bottom" style="gap:10px;">
+      <div class="f2f-tap-zone ready" id="rrZoneBottom" style="min-height:80px;">
+        <div class="f2f-tap-label" id="rrLabelBottom">Tap!</div>
+      </div>
+      <div class="f2f-score-bar" id="rrScoreBottom" style="margin-top:8px;">
+        <div class="f2f-score-name" id="rrNameBottom">Player 2</div>
+        <div class="f2f-score-num" id="rrWinsBottom">0</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== MP: TRUE/FALSE SHOWDOWN (face-to-face) ============== -->
+  <section class="f2f-screen" id="screen-f2f-truefalse">
+    <div class="f2f-half top" style="gap:10px;">
+      <div class="f2f-score-bar" id="tfScoreTop">
+        <div class="f2f-score-name" id="tfNameTop">Player 1</div>
+        <div class="f2f-score-num" id="tfScoreNumTop">0</div>
+      </div>
+      <div style="display:flex;gap:10px;width:100%;max-width:300px;margin-top:10px;">
+        <button class="f2f-tf-btn true-btn" id="tfTrueTop">✓ TRUE</button>
+        <button class="f2f-tf-btn false-btn" id="tfFalseTop">✗ FALSE</button>
+      </div>
+    </div>
+    <div class="f2f-divider" style="flex-direction:column;gap:4px;padding:10px 16px;">
+      <div style="color:var(--text-soft);font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;">Is this true?</div>
+      <div class="f2f-question" id="tfStatement" style="margin:0;font-size:clamp(18px,5vw,26px);">3 × 8 = 24</div>
+      <div style="color:var(--text-soft);font-size:12px;" id="tfRoundInfo">Round 1 / 10</div>
+    </div>
+    <div class="f2f-half bottom" style="gap:10px;">
+      <div style="display:flex;gap:10px;width:100%;max-width:300px;">
+        <button class="f2f-tf-btn true-btn" id="tfTrueBottom">✓ TRUE</button>
+        <button class="f2f-tf-btn false-btn" id="tfFalseBottom">✗ FALSE</button>
+      </div>
+      <div class="f2f-score-bar" style="margin-top:10px;">
+        <div class="f2f-score-name" id="tfNameBottom">Player 2</div>
+        <div class="f2f-score-num" id="tfScoreNumBottom">0</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== MP: NUMBER TUG-OF-WAR (face-to-face) ============== -->
+  <section class="f2f-screen" id="screen-f2f-tug">
+    <div class="f2f-half top" style="gap:10px;">
+      <div class="f2f-score-bar" id="tugScoreTop">
+        <div class="f2f-score-name" id="tugNameTop">Player 1</div>
+        <div class="f2f-score-num" id="tugScoreNumTop">5</div>
+      </div>
+      <div class="f2f-answers" id="tugAnswersTop" style="margin-top:10px;"></div>
+    </div>
+    <div class="f2f-divider" style="flex-direction:column;gap:6px;padding:10px 16px;">
+      <div class="f2f-question" id="tugQuestion" style="margin:0;font-size:clamp(18px,5vw,28px);">Loading…</div>
+      <div class="tug-rope-wrap">
+        <div class="tug-rope-track">
+          <div class="tug-rope-fill" id="tugFill" style="width:50%"></div>
+          <div class="tug-knot" id="tugKnot" style="left:50%"></div>
+        </div>
+        <div class="tug-labels"><span id="tugLabelLeft">Player 1</span><span id="tugLabelRight">Player 2</span></div>
+      </div>
+    </div>
+    <div class="f2f-half bottom" style="gap:10px;">
+      <div class="f2f-answers" id="tugAnswersBottom"></div>
+      <div class="f2f-score-bar" style="margin-top:10px;">
+        <div class="f2f-score-name" id="tugNameBottom">Player 2</div>
+        <div class="f2f-score-num" id="tugScoreNumBottom">5</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== MP: PASS SCREEN ============== -->
+  <section class="screen" id="screen-mp-pass">
+    <div class="pass-screen-wrap" id="passContent">
+      <div class="pass-avatar" id="passAvatar">A</div>
+      <div class="pass-name" id="passName">Player</div>
+      <div class="pass-sub" id="passSub">Get ready — it's your turn!</div>
+      <button class="pass-tap-hint" id="passTapBtn">Tap to start your turn →</button>
+    </div>
+  </section>
+
+  <!-- ============== MP: MATH TOURNAMENT ============== -->
+  <section class="screen" id="screen-mp-tournament">
+    <div class="game-head">
+      <button class="gh-back" id="tournQuit" aria-label="Leave">←</button>
+      <h1 id="tournTitle">Math Tournament</h1>
+      <button class="gh-pause" id="tournPause" aria-label="Pause">⏸</button>
+    </div>
+    <div class="player-hud" id="tournPlayerHud"></div>
+    <div class="hud">
+      <div class="hud-cell"><small>TIME</small><b class="js-time" id="tournTime">1:00</b><div class="hud-timebar"><i id="tournTimebar"></i></div></div>
+      <div class="hud-cell"><small>SCORE</small><b id="tournScore">0</b></div>
+      <div class="hud-cell"><small>SOLVED</small><b id="tournSolved">0</b></div>
+    </div>
+    <div class="problem-card">
+      <div class="p-kicker">Solve:</div>
+      <div class="problem-expr" id="tournExpr"></div>
+    </div>
+    <div class="choices" id="tournChoices"></div>
+    <div class="feedback" id="tournFeedback"><span id="tournFbText"></span><span id="tournFbPts"></span></div>
+  </section>
+
+  <!-- ============== MP: HOT POTATO MATH ============== -->
+  <section class="screen" id="screen-mp-potato">
+    <div class="game-head">
+      <button class="gh-back" id="potatoQuit" aria-label="Leave">←</button>
+      <h1>Hot Potato Math 🥔</h1>
+      <span style="width:40px;"></span>
+    </div>
+    <div class="player-hud" id="potatoPlayerHud"></div>
+    <div class="potato-zone" id="potatoZone">
+      <div class="potato-timer-big" id="potatoTimerBig">8</div>
+      <div class="potato-expr" id="potatoExpr">Loading…</div>
+      <div class="choices" id="potatoChoices" style="width:100%;max-width:340px;"></div>
+    </div>
+  </section>
+
+  <!-- ============== MP: LIGHTNING BLITZ ============== -->
+  <section class="screen" id="screen-mp-blitz">
+    <div class="game-head">
+      <button class="gh-back" id="blitzQuit" aria-label="Leave">←</button>
+      <h1>Lightning Blitz ⚡</h1>
+      <button class="gh-pause" id="blitzPause" aria-label="Pause">⏸</button>
+    </div>
+    <div class="player-hud" id="blitzPlayerHud"></div>
+    <div class="hud">
+      <div class="hud-cell"><small>TIME</small><b id="blitzTime">0:30</b><div class="hud-timebar"><i id="blitzTimebar"></i></div></div>
+      <div class="hud-cell"><small>HIT</small><b id="blitzHit">0</b></div>
+      <div class="hud-cell"><small>MISS</small><b id="blitzMiss">0</b></div>
+    </div>
+    <div class="problem-card">
+      <div class="problem-expr" id="blitzExpr"></div>
+    </div>
+    <div class="choices" id="blitzChoices"></div>
+    <div class="feedback" id="blitzFeedback"><span id="blitzFbText"></span><span></span></div>
+  </section>
+
+  <!-- ============== MP: NUMBER WAR ============== -->
+  <section class="screen" id="screen-mp-war">
+    <div class="game-head">
+      <button class="gh-back" id="warQuit" aria-label="Leave">←</button>
+      <h1>Number War 🃏</h1>
+      <span style="width:40px;"></span>
+    </div>
+    <div class="player-hud" id="warPlayerHud"></div>
+    <div class="problem-card" id="warProblemCard" style="margin-bottom:10px;">
+      <div class="p-kicker" id="warKicker">Solve to claim the higher card!</div>
+      <div class="problem-expr" id="warExpr">?</div>
+    </div>
+    <div class="stat-grid" id="warCards" style="margin-bottom:12px;"></div>
+    <div class="choices" id="warChoices"></div>
+    <div class="feedback" id="warFeedback"><span id="warFbText"></span><span></span></div>
+  </section>
+
+  <!-- ============== MP: MEMORY MASTERS ============== -->
+  <section class="screen" id="screen-mp-memory">
+    <div class="game-head">
+      <button class="gh-back" id="mmQuit" aria-label="Leave">←</button>
+      <h1>Memory Masters 🧠</h1>
+      <span style="width:40px;"></span>
+    </div>
+    <div class="player-hud" id="mmPlayerHud"></div>
+    <div class="hud">
+      <div class="hud-cell"><small>PAIRS LEFT</small><b id="mmPairsLeft">8</b></div>
+      <div class="hud-cell"><small>TURN</small><b id="mmTurnName" style="font-size:13px;">—</b></div>
+      <div class="hud-cell"><small>ROUND</small><b id="mmRound">1</b></div>
+    </div>
+    <div class="mem-grid" id="mmGrid" style="margin-top:6px;"></div>
+  </section>
+
+  <!-- ============== MP: DICE DASH ============== -->
+  <section class="screen" id="screen-mp-dice">
+    <div class="game-head">
+      <button class="gh-back" id="diceQuit" aria-label="Leave">←</button>
+      <h1>Dice Dash 🎲</h1>
+      <span style="width:40px;"></span>
+    </div>
+    <div class="player-hud" id="dicePlayerHud"></div>
+    <div class="problem-card">
+      <div class="p-kicker" id="diceKicker">Roll the dice!</div>
+      <div class="dice-row" id="diceRow">
+        <div class="die" id="die1">🎲</div>
+        <div class="dice-op" id="diceOp">×</div>
+        <div class="die" id="die2">🎲</div>
+      </div>
+      <div class="dice-result" id="diceResult" style="min-height:56px;"></div>
+    </div>
+    <div id="diceAnswerArea"></div>
+    <div class="feedback" id="diceFeedback"><span id="diceFbText"></span><span></span></div>
+  </section>
+
+  <!-- ============== MP: SURVIVOR MATH ============== -->
+  <section class="screen" id="screen-mp-survivor">
+    <div class="game-head">
+      <button class="gh-back" id="survivorQuit" aria-label="Leave">←</button>
+      <h1>Survivor Math 🔥</h1>
+      <span style="width:40px;"></span>
+    </div>
+    <div class="survivor-players" id="survivorPlayers"></div>
+    <div class="problem-card">
+      <div class="p-kicker" id="survivorKicker">Solve:</div>
+      <div class="problem-expr" id="survivorExpr"></div>
+    </div>
+    <div class="choices" id="survivorChoices"></div>
+    <div class="feedback" id="survivorFeedback"><span id="survivorFbText"></span><span></span></div>
+  </section>
+
+  <!-- ============== MP: SPEED QUIZ BATTLE ============== -->
+  <section class="screen" id="screen-mp-speedquiz">
+    <div class="game-head">
+      <button class="gh-back" id="sqQuit" aria-label="Leave">←</button>
+      <h1>Speed Quiz Battle 🎯</h1>
+      <span style="width:40px;"></span>
+    </div>
+    <div class="hud">
+      <div class="hud-cell"><small>QUESTION</small><b id="sqRound">1/10</b></div>
+      <div class="hud-cell" id="sqLeaderCell"><small>LEADING</small><b id="sqLeader" style="font-size:13px;">—</b></div>
+      <div class="hud-cell"><small>TIME</small><b id="sqTimer">—</b></div>
+    </div>
+    <div class="buzz-question">
+      <div class="p-kicker">What is…</div>
+      <div class="buzz-expr" id="sqExpr">Loading…</div>
+    </div>
+    <div class="buzz-grid" id="sqBuzzGrid"></div>
+    <input class="buzz-answer-input" id="sqAnswerInput" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="Type answer…" autocomplete="off" />
+    <div class="feedback" id="sqFeedback"><span id="sqFbText"></span><span></span></div>
+  </section>
+
+  <!-- ============== MP: MULTIPLAYER RESULTS ============== -->
+  <section class="screen" id="screen-mp-results">
+    <div class="results-icon" id="mpResIcon">🏆</div>
+    <h1 class="results-title" id="mpResTitle">Game Over!</h1>
+    <p class="results-sub" id="mpResSub">Here's how everyone did</p>
+    <div class="mp-podium" id="mpPodium"></div>
+    <button class="btn-accent wide-btn" id="mpPlayAgainBtn">Play Again</button>
+    <button class="btn-ghost wide-btn" id="mpHomeBtn">Back to Home</button>
+  </section>
+
   <!-- ============== RESULTS ============== -->
   <section class="screen" id="screen-results">
     <div class="results-icon" id="resultsIcon">⚡</div>
@@ -848,6 +1442,19 @@ body.in-game .tabbar { display: none; }
     </button>
   </div>
 </nav>
+
+<!-- ============== PLAYER SETUP OVERLAY ============== -->
+<div class="setup-overlay" id="setupOverlay">
+  <div class="setup-sheet">
+    <div class="setup-handle"></div>
+    <div class="setup-title" id="setupGameTitle">Math Duel</div>
+    <div class="setup-sub" id="setupGameSub">Choose how many players and enter your names</div>
+    <div class="player-count-row" id="playerCountRow"></div>
+    <div class="player-name-fields" id="playerNameFields"></div>
+    <button class="setup-start-btn" id="setupStartBtn">Let's Play! 🎮</button>
+    <button class="setup-cancel-btn" id="setupCancelBtn">Cancel</button>
+  </div>
+</div>
 
 <!-- ============== PAUSE OVERLAY ============== -->
 <div class="overlay" id="pauseOverlay" role="dialog" aria-modal="true" aria-labelledby="pauseTitle">
@@ -1897,6 +2504,1329 @@ window.addEventListener("appinstalled", () => {
 });
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").catch(() => {/* offline support is optional */});
+}
+
+/* ==================================================================
+   MULTIPLAYER — REGISTRY + SHARED STATE
+   ================================================================== */
+const PLAYER_COLORS = ["#A78BFA", "#34D399", "#F59E0B", "#F87171"];
+const PLAYER_INITIALS_BG = ["#7C3AED", "#059669", "#D97706", "#DC2626"];
+
+const MP_GAMES = {
+  "f2f-duel":     { name: "Math Duel",         sub: "Answer first — first to 10 wins!", icon: "⚔️",  minP: 2, maxP: 2, type: "f2f",  tag: "Face-to-Face" },
+  "f2f-reaction": { name: "Reaction Race",      sub: "Tap your side when it flashes!",   icon: "🎯",  minP: 2, maxP: 2, type: "f2f",  tag: "Face-to-Face" },
+  "f2f-truefalse":{ name: "True/False Clash",   sub: "Is the equation true or false?",   icon: "✅",  minP: 2, maxP: 2, type: "f2f",  tag: "Face-to-Face" },
+  "f2f-tug":      { name: "Number Tug-of-War",  sub: "Correct answers pull the rope!",   icon: "🔢",  minP: 2, maxP: 2, type: "f2f",  tag: "Face-to-Face" },
+  "mp-tournament":{ name: "Math Tournament",    sub: "Best score in 60s wins!",          icon: "🏆",  minP: 2, maxP: 4, type: "pass", tag: "2–4 Players" },
+  "mp-potato":    { name: "Hot Potato Math",    sub: "Answer before time runs out!",     icon: "🥔",  minP: 2, maxP: 4, type: "pass", tag: "2–4 Players" },
+  "mp-blitz":     { name: "Lightning Blitz",    sub: "30-second burst — highest wins!",  icon: "⚡",  minP: 2, maxP: 4, type: "pass", tag: "2–4 Players" },
+  "mp-war":       { name: "Number War",         sub: "Solve to claim the higher card!",  icon: "🃏",  minP: 2, maxP: 4, type: "pass", tag: "2–4 Players" },
+  "mp-memory":    { name: "Memory Masters",     sub: "Take turns, most pairs wins!",     icon: "🧠",  minP: 2, maxP: 4, type: "pass", tag: "2–4 Players" },
+  "mp-dice":      { name: "Dice Dash",          sub: "Roll dice, do the math, score!",   icon: "🎲",  minP: 2, maxP: 4, type: "pass", tag: "2–4 Players" },
+  "mp-survivor":  { name: "Survivor Math",      sub: "Wrong answer = eliminated!",       icon: "🔥",  minP: 2, maxP: 4, type: "pass", tag: "2–4 Players" },
+  "mp-speedquiz": { name: "Speed Quiz Battle",  sub: "Buzz in first, answer correctly!", icon: "🎯",  minP: 2, maxP: 4, type: "pass", tag: "2–4 Players" },
+};
+
+let mp = {
+  game: null, players: [], currentIdx: 0,
+  scores: [], lives: [], eliminated: [],
+  roundNum: 0, lastGame: null,
+};
+
+/* Home — render multiplayer section */
+function renderMpModeList() {
+  const list = $("mpModeList");
+  list.innerHTML = "";
+  for (const [key, g] of Object.entries(MP_GAMES)) {
+    const row = document.createElement("button");
+    row.className = "mp-mode-row";
+    const playerRange = g.minP === g.maxP ? `${g.minP} players` : `${g.minP}–${g.maxP} players`;
+    row.innerHTML = `
+      <div class="mode-icon" style="background:rgba(167,139,250,0.15)">${g.icon}</div>
+      <div class="mode-info">
+        <div class="mode-name">${g.name}</div>
+        <div class="mode-sub">${g.sub}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;margin-right:4px;">
+        <span class="mp-player-tag">${g.tag}</span>
+        <span style="font-size:11px;color:var(--text-soft);">${playerRange}</span>
+      </div>
+      <span class="mp-play-btn" aria-hidden="true"></span>`;
+    row.setAttribute("aria-label", `Play ${g.name}. ${g.sub}`);
+    row.addEventListener("click", () => openMpSetup(key));
+    list.appendChild(row);
+  }
+}
+
+/* ==================================================================
+   PLAYER SETUP OVERLAY
+   ================================================================== */
+let setupPendingGame = null;
+let setupPlayerCount = 2;
+
+function openMpSetup(gameKey) {
+  const g = MP_GAMES[gameKey];
+  setupPendingGame = gameKey;
+  setupPlayerCount = g.minP;
+  $("setupGameTitle").textContent = g.icon + " " + g.name;
+  $("setupGameSub").textContent = g.type === "f2f"
+    ? "Place your device on a table between two players"
+    : "Each player takes a turn — pass the device when prompted";
+
+  // Build count buttons
+  const countRow = $("playerCountRow");
+  countRow.innerHTML = "";
+  for (let n = g.minP; n <= g.maxP; n++) {
+    const btn = document.createElement("button");
+    btn.className = "pcount-btn" + (n === g.minP ? " active" : "");
+    btn.textContent = n + " " + (n === 1 ? "player" : "players");
+    btn.dataset.count = n;
+    btn.addEventListener("click", () => {
+      setupPlayerCount = n;
+      countRow.querySelectorAll(".pcount-btn").forEach(b => b.classList.toggle("active", b === btn));
+      buildNameFields(n);
+    });
+    countRow.appendChild(btn);
+  }
+  buildNameFields(g.minP);
+  $("setupOverlay").classList.add("show");
+}
+
+function buildNameFields(n) {
+  const wrap = $("playerNameFields");
+  const existing = [...wrap.querySelectorAll(".player-name-input")].map(i => i.value);
+  wrap.innerHTML = "";
+  const defaults = ["Player 1","Player 2","Player 3","Player 4"];
+  for (let i = 0; i < n; i++) {
+    const row = document.createElement("div");
+    row.className = "player-name-wrap";
+    row.innerHTML = `
+      <div class="player-color-dot" style="background:${PLAYER_COLORS[i]}"></div>
+      <input class="player-name-input" type="text" maxlength="14"
+        placeholder="${defaults[i]}" value="${existing[i] || defaults[i]}" aria-label="Player ${i+1} name" />`;
+    wrap.appendChild(row);
+  }
+}
+
+$("setupCancelBtn").addEventListener("click", () => $("setupOverlay").classList.remove("show"));
+$("setupStartBtn").addEventListener("click", () => {
+  const names = [...$("playerNameFields").querySelectorAll(".player-name-input")]
+    .map(i => i.value.trim() || i.placeholder);
+  mp.players = names;
+  mp.scores = names.map(() => 0);
+  mp.lives = names.map(() => 3);
+  mp.eliminated = names.map(() => false);
+  mp.currentIdx = 0;
+  mp.roundNum = 0;
+  mp.lastGame = setupPendingGame;
+  $("setupOverlay").classList.remove("show");
+  launchMpGame(setupPendingGame);
+});
+
+function launchMpGame(key) {
+  document.body.classList.add("in-game");
+  const g = MP_GAMES[key];
+  if (key === "f2f-duel") startF2FDuel();
+  else if (key === "f2f-reaction") startF2FReaction();
+  else if (key === "f2f-truefalse") startF2FTrueFalse();
+  else if (key === "f2f-tug") startF2FTug();
+  else if (key === "mp-tournament") startMpTournament();
+  else if (key === "mp-potato") startMpPotato();
+  else if (key === "mp-blitz") startMpBlitz();
+  else if (key === "mp-war") startMpWar();
+  else if (key === "mp-memory") startMpMemory();
+  else if (key === "mp-dice") startMpDice();
+  else if (key === "mp-survivor") startMpSurvivor();
+  else if (key === "mp-speedquiz") startMpSpeedQuiz();
+}
+
+function showF2FScreen(id) {
+  document.querySelectorAll(".screen,.f2f-screen").forEach(s => {
+    s.classList.remove("active");
+    if (s.classList.contains("f2f-screen")) s.style.display = "none";
+  });
+  const el = $(id);
+  if (el.classList.contains("f2f-screen")) {
+    el.style.display = "flex";
+    el.classList.add("active");
+  } else {
+    el.classList.add("active");
+  }
+}
+
+/* Pass-screen helper */
+function showPassScreen(playerIdx, onTap) {
+  const name = mp.players[playerIdx];
+  const color = PLAYER_INITIALS_BG[playerIdx];
+  $("passAvatar").textContent = (name[0] || "?").toUpperCase();
+  $("passAvatar").style.background = color;
+  $("passName").textContent = name + "'s Turn";
+  $("passSub").textContent = "Hand the device to " + name;
+  showScreen("screen-mp-pass");
+  const btn = $("passTapBtn");
+  const handler = () => { btn.removeEventListener("click", handler); onTap(); };
+  btn.addEventListener("click", handler);
+}
+
+/* Multiplayer results */
+function showMpResults(title, sub, icon) {
+  clearMpTimers();
+  document.querySelectorAll(".f2f-screen").forEach(s => { s.classList.remove("active"); s.style.display = "none"; });
+  document.body.classList.remove("in-game");
+  showScreen("screen-mp-results");
+  $("mpResTitle").textContent = title || "Game Over!";
+  $("mpResSub").textContent = sub || "Here's how everyone did";
+  $("mpResIcon").textContent = icon || "🏆";
+
+  const sorted = mp.players
+    .map((name, i) => ({ name, score: mp.scores[i], color: PLAYER_INITIALS_BG[i] }))
+    .sort((a, b) => b.score - a.score);
+
+  const ranks = ["🥇", "🥈", "🥉", "4️⃣"];
+  $("mpPodium").innerHTML = sorted.map((p, i) => `
+    <div class="mp-podium-row${i === 0 ? " first" : ""}">
+      <div class="mp-podium-rank">${ranks[i] || (i+1)+"."}</div>
+      <div class="mp-podium-avatar" style="background:${p.color}">${p.name[0].toUpperCase()}</div>
+      <div class="mp-podium-name">${p.name}</div>
+      <div class="mp-podium-score" style="color:${p.color}">${p.score}</div>
+    </div>`).join("");
+
+  bumpTotals(mp.scores[0] || 0);
+  bumpDayStreak();
+}
+
+$("mpPlayAgainBtn").addEventListener("click", () => {
+  mp.scores = mp.players.map(() => 0);
+  mp.lives = mp.players.map(() => 3);
+  mp.eliminated = mp.players.map(() => false);
+  mp.currentIdx = 0;
+  mp.roundNum = 0;
+  document.body.classList.add("in-game");
+  launchMpGame(mp.lastGame);
+});
+$("mpHomeBtn").addEventListener("click", () => showTab("home"));
+
+/* Back/quit for f2f screens */
+function quitMpGame() {
+  document.querySelectorAll(".f2f-screen").forEach(s => { s.classList.remove("active"); s.style.display = "none"; });
+  clearMpTimers();
+  showTab("home");
+}
+
+let mpTimers = [];
+function mpTimeout(fn, ms) { const t = setTimeout(fn, ms); mpTimers.push(t); return t; }
+function mpInterval(fn, ms) { const t = setInterval(fn, ms); mpTimers.push(t); return t; }
+function clearMpTimers() { mpTimers.forEach(t => { clearTimeout(t); clearInterval(t); }); mpTimers = []; }
+
+/* Player HUD for pass-and-play */
+function renderPlayerHud(containerEl, currentIdx) {
+  containerEl.innerHTML = `
+    <div class="player-hud-dot" style="background:${PLAYER_COLORS[currentIdx]}"></div>
+    <div class="player-hud-name">${mp.players[currentIdx]}</div>
+    <div class="player-hud-scores">
+      ${mp.players.map((n, i) => `
+        <div class="player-hud-chip${i === currentIdx ? " active" : ""}">
+          <span style="color:${PLAYER_COLORS[i]}">${n[0]}</span> ${mp.scores[i]}
+        </div>`).join("")}
+    </div>`;
+}
+
+/* ==================================================================
+   F2F 1 — MATH DUEL
+   ================================================================== */
+let duel = {};
+const DUEL_WIN = 10;
+
+function startF2FDuel() {
+  duel = { locked: false, scores: [0, 0], current: null };
+  const [p1, p2] = mp.players;
+  $("duelNameTop").textContent = p1;
+  $("duelNameBottom").textContent = p2;
+  $("duelCSName1").textContent = p1.slice(0,6);
+  $("duelCSName2").textContent = p2.slice(0,6);
+  updateDuelScores();
+  showF2FScreen("screen-f2f-duel");
+  duelNext();
+}
+
+function updateDuelScores() {
+  $("duelScoreNumTop").textContent = duel.scores[0];
+  $("duelScoreNumBottom").textContent = duel.scores[1];
+  $("duelCSScore1").textContent = duel.scores[0];
+  $("duelCSScore2").textContent = duel.scores[1];
+}
+
+function duelNext() {
+  duel.current = genSprintProblem(duel.scores[0] + duel.scores[1]);
+  duel.locked = false;
+  const expr = exprHTML(duel.current.parts);
+  $("duelQuestion").innerHTML = expr;
+
+  const options = shuffle([duel.current.answer, ...makeDistractors(duel.current.answer)]);
+
+  function makeButtons(containerId, playerIdx) {
+    const wrap = $(containerId);
+    wrap.innerHTML = "";
+    for (const opt of options) {
+      const btn = document.createElement("button");
+      btn.className = "f2f-answer-btn";
+      btn.textContent = opt;
+      btn.addEventListener("click", () => duelAnswer(btn, opt, playerIdx, wrap));
+      wrap.appendChild(btn);
+    }
+  }
+  makeButtons("duelAnswersTop", 0);
+  makeButtons("duelAnswersBottom", 1);
+}
+
+function duelAnswer(btn, value, playerIdx, wrap) {
+  if (duel.locked) return;
+  duel.locked = true;
+  if (value === duel.current.answer) {
+    btn.classList.add("correct");
+    duel.scores[playerIdx]++;
+    mp.scores[playerIdx] = duel.scores[playerIdx];
+    updateDuelScores();
+    announce(`${mp.players[playerIdx]} got it!`);
+    if (duel.scores[playerIdx] >= DUEL_WIN) {
+      mpTimeout(() => showMpResults(`${mp.players[playerIdx]} Wins! 🎉`, `First to ${DUEL_WIN} — great duel!`, "⚔️"), 600);
+      return;
+    }
+  } else {
+    btn.classList.add("wrong");
+    wrap.querySelectorAll(".f2f-answer-btn").forEach(b => {
+      if (+b.textContent === duel.current.answer) b.classList.add("correct");
+    });
+  }
+  mpTimeout(() => { if (!duel.locked || true) duelNext(); }, 600);
+}
+
+/* Back button */
+const duelBack = document.createElement("button");
+duelBack.className = "gh-back";
+duelBack.textContent = "←";
+duelBack.style.cssText = "position:absolute;top:10px;right:10px;z-index:10;width:40px;height:40px;border-radius:12px;background:var(--card);border:1px solid var(--border);font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;";
+duelBack.addEventListener("click", quitMpGame);
+$("screen-f2f-duel").appendChild(duelBack);
+
+/* ==================================================================
+   F2F 2 — REACTION RACE
+   ================================================================== */
+let rr = {};
+const RR_ROUNDS = 7;
+
+function startF2FReaction() {
+  rr = { wins: [0,0], round: 0, phase: "idle", goTimeout: null, winnerIdx: null };
+  const [p1, p2] = mp.players;
+  $("rrNameTop").textContent = p1;
+  $("rrNameBottom").textContent = p2;
+  updateRRDisplay();
+  showF2FScreen("screen-f2f-reaction");
+  rrSetPhase("idle");
+}
+
+function updateRRDisplay() {
+  $("rrWinsTop").textContent = rr.wins[0];
+  $("rrWinsBottom").textContent = rr.wins[1];
+  $("rrCSRound").textContent = `Round ${Math.min(rr.round + 1, RR_ROUNDS)} / ${RR_ROUNDS}`;
+}
+
+function rrSetPhase(phase, msg) {
+  rr.phase = phase;
+  const zones = [$("rrZoneTop"), $("rrZoneBottom")];
+  const labels = [$("rrLabelTop"), $("rrLabelBottom")];
+
+  if (phase === "idle") {
+    zones.forEach((z, i) => {
+      z.className = "f2f-tap-zone ready";
+      labels[i].textContent = rr.round === 0 ? "Tap to start!" : "Tap for next";
+    });
+    $("rrCSStatus").textContent = "Get Ready";
+    $("rrCSStatus").style.color = "var(--accent)";
+  } else if (phase === "waiting") {
+    zones.forEach(z => z.className = "f2f-tap-zone ready");
+    labels.forEach(l => l.textContent = "Wait…");
+    $("rrCSStatus").textContent = "Wait for it…";
+    $("rrCSStatus").style.color = "var(--text-soft)";
+    rr.goTimeout = mpTimeout(() => {
+      rr.goAt = performance.now();
+      rrSetPhase("go");
+    }, randInt(1200, 3800));
+  } else if (phase === "go") {
+    zones.forEach(z => z.className = "f2f-tap-zone go-flash");
+    labels.forEach(l => l.textContent = "TAP NOW!");
+    $("rrCSStatus").textContent = "GO!";
+    $("rrCSStatus").style.color = "var(--lime)";
+  } else if (phase === "result") {
+    const w = rr.winnerIdx;
+    zones.forEach((z, i) => {
+      z.className = "f2f-tap-zone " + (i === w ? "scored" : "too-slow");
+      labels[i].textContent = i === w ? "🎉 Point!" : "Too slow!";
+    });
+    $("rrCSStatus").textContent = msg || "";
+    mpTimeout(() => {
+      if (rr.round >= RR_ROUNDS) {
+        const winner = rr.wins[0] > rr.wins[1] ? 0 : rr.wins[1] > rr.wins[0] ? 1 : -1;
+        mp.scores = [...rr.wins];
+        const title = winner === -1 ? "It's a Tie! 🤝" : `${mp.players[winner]} Wins! 🎉`;
+        showMpResults(title, `Final: ${rr.wins[0]} – ${rr.wins[1]}`, "🎯");
+      } else {
+        rrSetPhase("idle");
+        updateRRDisplay();
+      }
+    }, 1200);
+  } else if (phase === "early") {
+    zones.forEach((z,i) => {
+      z.className = "f2f-tap-zone " + (i === rr.earlyIdx ? "too-slow" : "ready");
+      labels[i].textContent = i === rr.earlyIdx ? "Too early! ⚠️" : "Wait…";
+    });
+    $("rrCSStatus").textContent = "False start!";
+    mpTimeout(() => rrSetPhase("idle"), 1200);
+  }
+}
+
+[$("rrZoneTop"), $("rrZoneBottom")].forEach((zone, playerIdx) => {
+  zone.addEventListener("pointerdown", () => {
+    if (rr.phase === "idle") {
+      rr.round++;
+      rrSetPhase("waiting");
+    } else if (rr.phase === "waiting") {
+      clearTimeout(rr.goTimeout);
+      rr.earlyIdx = playerIdx;
+      rrSetPhase("early");
+    } else if (rr.phase === "go") {
+      const ms = Math.round(performance.now() - rr.goAt);
+      rr.wins[playerIdx]++;
+      mp.scores = [...rr.wins];
+      rr.winnerIdx = playerIdx;
+      rr.phase = "result"; // prevent double-tap
+      rrSetPhase("result", `${mp.players[playerIdx]} wins in ${ms}ms!`);
+    }
+  });
+});
+
+const rrBack = document.createElement("button");
+rrBack.style.cssText = "position:absolute;top:10px;right:10px;z-index:10;width:40px;height:40px;border-radius:12px;background:var(--card);border:1px solid var(--border);font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text);";
+rrBack.textContent = "←";
+rrBack.addEventListener("click", quitMpGame);
+$("screen-f2f-reaction").appendChild(rrBack);
+
+/* ==================================================================
+   F2F 3 — TRUE / FALSE CLASH
+   ================================================================== */
+let tf = {};
+const TF_ROUNDS = 10;
+
+function genTFStatement() {
+  const prob = twoOp(pick(["add","sub","mul","div"]), 2, 12);
+  const correct = prob.answer;
+  const isTrue = Math.random() < 0.5;
+  const displayed = isTrue ? correct : correct + pick([1,-1,2,-2,3,-3]) * randInt(1,3);
+  return { parts: prob.parts, displayed, isTrue };
+}
+
+function startF2FTrueFalse() {
+  tf = { scores: [0, 0], round: 0, locked: false, current: null };
+  const [p1, p2] = mp.players;
+  $("tfNameTop").textContent = p1;
+  $("tfNameBottom").textContent = p2;
+  showF2FScreen("screen-f2f-truefalse");
+  tfNext();
+}
+
+function tfNext() {
+  if (tf.round >= TF_ROUNDS) {
+    mp.scores = [...tf.scores];
+    const winner = tf.scores[0] > tf.scores[1] ? 0 : tf.scores[1] > tf.scores[0] ? 1 : -1;
+    const title = winner === -1 ? "It's a Tie! 🤝" : `${mp.players[winner]} Wins! 🎉`;
+    return showMpResults(title, `Final: ${tf.scores[0]} – ${tf.scores[1]}`, "✅");
+  }
+  tf.current = genTFStatement();
+  tf.locked = false;
+  const exprStr = exprHTML(tf.current.parts) + ` <span class="op">=</span> ${tf.current.displayed}`;
+  $("tfStatement").innerHTML = exprStr;
+  $("tfRoundInfo").textContent = `Round ${tf.round + 1} / ${TF_ROUNDS}`;
+  $("tfScoreNumTop").textContent = tf.scores[0];
+  $("tfScoreNumBottom").textContent = tf.scores[1];
+  ["tfTrueTop","tfFalseTop","tfTrueBottom","tfFalseBottom"].forEach(id => {
+    $(id).className = $(id).className.replace(/\s*flash-\w+/g,"");
+    $(id).disabled = false;
+  });
+}
+
+function tfAnswer(playerIdx, answered) {
+  if (tf.locked) return;
+  tf.locked = true;
+  const correct = answered === tf.current.isTrue;
+  if (correct) {
+    tf.scores[playerIdx]++;
+    mp.scores[playerIdx] = tf.scores[playerIdx];
+    announce(`${mp.players[playerIdx]} correct!`);
+  }
+  // Flash buttons
+  const suffix = playerIdx === 0 ? "Top" : "Bottom";
+  const trueId = "tfTrue" + suffix, falseId = "tfFalse" + suffix;
+  if (tf.current.isTrue) {
+    $(trueId).classList.add("flash-correct");
+    $(falseId).classList.add("flash-wrong");
+  } else {
+    $(falseId).classList.add("flash-correct");
+    $(trueId).classList.add("flash-wrong");
+  }
+  [trueId, falseId, "tfTrue" + (playerIdx === 0 ? "Bottom" : "Top"), "tfFalse" + (playerIdx === 0 ? "Bottom" : "Top")].forEach(id => $(id).disabled = true);
+  tf.round++;
+  mpTimeout(tfNext, 900);
+}
+
+$("tfTrueTop").addEventListener("click", () => tfAnswer(0, true));
+$("tfFalseTop").addEventListener("click", () => tfAnswer(0, false));
+$("tfTrueBottom").addEventListener("click", () => tfAnswer(1, true));
+$("tfFalseBottom").addEventListener("click", () => tfAnswer(1, false));
+
+const tfBack = document.createElement("button");
+tfBack.style.cssText = "position:absolute;top:10px;right:10px;z-index:10;width:40px;height:40px;border-radius:12px;background:var(--card);border:1px solid var(--border);font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text);";
+tfBack.textContent = "←";
+tfBack.addEventListener("click", quitMpGame);
+$("screen-f2f-truefalse").appendChild(tfBack);
+
+/* ==================================================================
+   F2F 4 — NUMBER TUG-OF-WAR
+   ================================================================== */
+let tug = {};
+const TUG_STEPS = 10; // each player has a 0–10 "position", starts at 5
+
+function startF2FTug() {
+  tug = { pos: 5, locked: false, current: null };
+  const [p1, p2] = mp.players;
+  $("tugNameTop").textContent = p1;
+  $("tugNameBottom").textContent = p2;
+  $("tugLabelLeft").textContent = p1;
+  $("tugLabelRight").textContent = p2;
+  updateTugRope();
+  showF2FScreen("screen-f2f-tug");
+  tugNext();
+}
+
+function updateTugRope() {
+  const pct = (tug.pos / TUG_STEPS) * 100;
+  $("tugFill").style.width = pct + "%";
+  $("tugKnot").style.left = pct + "%";
+  $("tugScoreNumTop").textContent = tug.pos;    // P1's pull (how far knot is toward them)
+  $("tugScoreNumBottom").textContent = TUG_STEPS - tug.pos;
+}
+
+function tugNext() {
+  tug.current = genSprintProblem(Math.abs(tug.pos - 5));
+  tug.locked = false;
+  $("tugQuestion").innerHTML = exprHTML(tug.current.parts);
+  const opts = shuffle([tug.current.answer, ...makeDistractors(tug.current.answer)]);
+
+  function makeButtons(id, playerIdx) {
+    const wrap = $(id);
+    wrap.innerHTML = "";
+    for (const opt of opts) {
+      const btn = document.createElement("button");
+      btn.className = "f2f-answer-btn";
+      btn.textContent = opt;
+      btn.addEventListener("click", () => {
+        if (tug.locked) return;
+        tug.locked = true;
+        if (opt === tug.current.answer) {
+          btn.classList.add("correct");
+          tug.pos = Math.max(0, Math.min(TUG_STEPS, tug.pos + (playerIdx === 0 ? 1 : -1)));
+          mp.scores[playerIdx] = (mp.scores[playerIdx] || 0) + 1;
+          updateTugRope();
+          if (tug.pos <= 0 || tug.pos >= TUG_STEPS) {
+            const winner = tug.pos >= TUG_STEPS ? 0 : 1;
+            mpTimeout(() => showMpResults(`${mp.players[winner]} Wins! 🎉`, "They pulled the rope all the way!", "🔢"), 700);
+            return;
+          }
+        } else {
+          btn.classList.add("wrong");
+        }
+        mpTimeout(tugNext, 600);
+      });
+      wrap.appendChild(btn);
+    }
+  }
+  makeButtons("tugAnswersTop", 0);
+  makeButtons("tugAnswersBottom", 1);
+}
+
+const tugBack = document.createElement("button");
+tugBack.style.cssText = "position:absolute;top:10px;right:10px;z-index:10;width:40px;height:40px;border-radius:12px;background:var(--card);border:1px solid var(--border);font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text);";
+tugBack.textContent = "←";
+tugBack.addEventListener("click", quitMpGame);
+$("screen-f2f-tug").appendChild(tugBack);
+
+/* ==================================================================
+   PASS-AND-PLAY SHARED HELPERS
+   ================================================================== */
+let mpRound = {}; // shared state for current player's turn in pass-and-play
+
+function nextMpPlayer(afterIdx, callback) {
+  const next = (afterIdx + 1) % mp.players.length;
+  mp.currentIdx = next;
+  showPassScreen(next, callback);
+}
+
+/* ==================================================================
+   MP 5 — MATH TOURNAMENT (pass-and-play, 2-4 players)
+   ================================================================== */
+let tourn = {};
+const TOURN_TIME = 60;
+
+$("tournQuit").addEventListener("click", () => { clearMpTimers(); showTab("home"); document.body.classList.remove("in-game"); });
+$("tournPause").addEventListener("click", () => {
+  if (tourn.paused) {
+    tourn.paused = false;
+    tournTick();
+  } else {
+    tourn.paused = true;
+    clearMpTimers();
+  }
+});
+
+function startMpTournament() {
+  mp.scores = mp.players.map(() => 0);
+  mp.currentIdx = 0;
+  showPassScreen(0, () => tournBeginPlayerTurn(0));
+}
+
+function tournBeginPlayerTurn(idx) {
+  tourn = { idx, timeLeft: TOURN_TIME, score: 0, solved: 0, locked: false, paused: false, current: null };
+  renderPlayerHud($("tournPlayerHud"), idx);
+  $("tournTitle").textContent = mp.players[idx] + "'s Turn";
+  showScreen("screen-mp-tournament");
+  $("tournScore").textContent = 0;
+  $("tournSolved").textContent = 0;
+  $("tournFeedback").className = "feedback";
+  tournUpdateTimer();
+  tournNext();
+  tournTick();
+}
+
+function tournTick() {
+  if (tourn.paused) return;
+  const t = mpTimeout(() => {
+    tourn.timeLeft--;
+    tournUpdateTimer();
+    if (tourn.timeLeft <= 0) {
+      mp.scores[tourn.idx] = tourn.score;
+      const next = tourn.idx + 1;
+      if (next >= mp.players.length) {
+        showMpResults("Tournament Results! 🏆", "Here's the final leaderboard", "🏆");
+      } else {
+        showPassScreen(next, () => tournBeginPlayerTurn(next));
+      }
+    } else {
+      tournTick();
+    }
+  }, 1000);
+}
+
+function tournUpdateTimer() {
+  const m = Math.floor(tourn.timeLeft / 60), s = tourn.timeLeft % 60;
+  $("tournTime").textContent = `${m}:${String(s).padStart(2,"0")}`;
+  $("tournTimebar").style.width = (tourn.timeLeft / TOURN_TIME * 100) + "%";
+  $("screen-mp-tournament").querySelector(".hud").classList.toggle("low", tourn.timeLeft <= 10);
+}
+
+function tournNext() {
+  tourn.current = genSprintProblem(tourn.solved);
+  tourn.locked = false;
+  $("tournExpr").innerHTML = exprHTML(tourn.current.parts);
+  const opts = shuffle([tourn.current.answer, ...makeDistractors(tourn.current.answer)]);
+  const wrap = $("tournChoices");
+  wrap.innerHTML = "";
+  for (const opt of opts) {
+    const btn = document.createElement("button");
+    btn.className = "choice";
+    btn.textContent = opt;
+    btn.addEventListener("click", () => {
+      if (tourn.locked || tourn.timeLeft <= 0) return;
+      tourn.locked = true;
+      const fb = $("tournFeedback");
+      if (opt === tourn.current.answer) {
+        const pts = 10 * (tourn.solved + 1);
+        tourn.score += pts; tourn.solved++;
+        $("tournScore").textContent = tourn.score;
+        $("tournSolved").textContent = tourn.solved;
+        btn.classList.add("good");
+        fb.className = "feedback good show";
+        $("tournFbText").textContent = "✓ Correct!";
+        $("tournFbPts").textContent = "+" + pts;
+      } else {
+        btn.classList.add("bad");
+        wrap.querySelectorAll(".choice").forEach(b => { if (+b.textContent === tourn.current.answer) b.classList.add("good"); });
+        fb.className = "feedback bad show";
+        $("tournFbText").textContent = "✗ Not quite";
+        $("tournFbPts").textContent = "= " + tourn.current.answer;
+      }
+      mpTimeout(() => { if (tourn.timeLeft > 0) tournNext(); }, 480);
+    });
+    wrap.appendChild(btn);
+  }
+}
+
+/* ==================================================================
+   MP 6 — HOT POTATO MATH
+   ================================================================== */
+let potato = {};
+const POTATO_TIME = 8;
+
+$("potatoQuit").addEventListener("click", () => { clearMpTimers(); showTab("home"); document.body.classList.remove("in-game"); });
+
+function startMpPotato() {
+  mp.scores = mp.players.map(() => 0);
+  mp.lives = mp.players.map(() => 3);
+  mp.currentIdx = 0;
+  potatoBeginTurn(0);
+}
+
+function potatoBeginTurn(idx) {
+  clearMpTimers();
+  potato = { idx, timeLeft: POTATO_TIME, current: null, locked: false };
+  renderPlayerHud($("potatoPlayerHud"), idx);
+  showScreen("screen-mp-potato");
+  potatoNext();
+  potatoTick();
+}
+
+function potatoTick() {
+  const t = mpTimeout(() => {
+    potato.timeLeft--;
+    $("potatoTimerBig").textContent = potato.timeLeft;
+    $("potatoTimerBig").classList.toggle("urgent", potato.timeLeft <= 3);
+    if (potato.timeLeft <= 0) {
+      mp.lives[potato.idx] = Math.max(0, mp.lives[potato.idx] - 1);
+      const activePlayers = mp.players.filter((_, i) => mp.lives[i] > 0);
+      if (activePlayers.length <= 1) {
+        mp.scores = mp.lives.map((l, i) => l * 10 + mp.scores[i]);
+        showMpResults("Hot Potato Results! 🥔", "Most lives remaining wins", "🥔");
+        return;
+      }
+      let next = (potato.idx + 1) % mp.players.length;
+      while (mp.lives[next] <= 0) next = (next + 1) % mp.players.length;
+      mpTimeout(() => potatoBeginTurn(next), 400);
+    } else {
+      potatoTick();
+    }
+  }, 1000);
+}
+
+function potatoNext() {
+  potato.current = genSprintProblem(mp.scores[potato.idx]);
+  potato.locked = false;
+  potato.timeLeft = POTATO_TIME;
+  $("potatoTimerBig").textContent = POTATO_TIME;
+  $("potatoTimerBig").classList.remove("urgent");
+  $("potatoExpr").innerHTML = exprHTML(potato.current.parts);
+
+  const opts = shuffle([potato.current.answer, ...makeDistractors(potato.current.answer)]);
+  const wrap = $("potatoChoices");
+  wrap.innerHTML = "";
+  for (const opt of opts) {
+    const btn = document.createElement("button");
+    btn.className = "choice";
+    btn.textContent = opt;
+    btn.addEventListener("click", () => {
+      if (potato.locked || potato.timeLeft <= 0) return;
+      potato.locked = true;
+      clearMpTimers();
+      if (opt === potato.current.answer) {
+        btn.classList.add("good");
+        mp.scores[potato.idx]++;
+        let next = (potato.idx + 1) % mp.players.length;
+        while (mp.lives[next] <= 0) next = (next + 1) % mp.players.length;
+        mpTimeout(() => potatoBeginTurn(next), 500);
+      } else {
+        clearMpTimers();
+        btn.classList.add("bad");
+        mp.lives[potato.idx] = Math.max(0, mp.lives[potato.idx] - 1);
+        const activePlayers = mp.players.filter((_, i) => mp.lives[i] > 0);
+        if (activePlayers.length <= 1) {
+          mp.scores = mp.lives.map((l, i) => l * 10 + mp.scores[i]);
+          mpTimeout(() => showMpResults("Hot Potato Results! 🥔", "Last one standing!", "🥔"), 500);
+          return;
+        }
+        mpTimeout(() => { potatoNext(); potatoTick(); }, 700);
+      }
+    });
+    wrap.appendChild(btn);
+  }
+}
+
+/* ==================================================================
+   MP 7 — LIGHTNING BLITZ
+   ================================================================== */
+let blitz = {};
+const BLITZ_TIME = 30;
+
+$("blitzQuit").addEventListener("click", () => { clearMpTimers(); showTab("home"); document.body.classList.remove("in-game"); });
+$("blitzPause").addEventListener("click", () => {
+  if (blitz.paused) { blitz.paused = false; blitzTick(); }
+  else { blitz.paused = true; clearMpTimers(); }
+});
+
+function startMpBlitz() {
+  mp.scores = mp.players.map(() => 0);
+  mp.currentIdx = 0;
+  showPassScreen(0, () => blitzBeginTurn(0));
+}
+
+function blitzBeginTurn(idx) {
+  blitz = { idx, timeLeft: BLITZ_TIME, hit: 0, miss: 0, locked: false, paused: false, current: null };
+  renderPlayerHud($("blitzPlayerHud"), idx);
+  $("blitzTime").textContent = `0:${BLITZ_TIME}`;
+  $("blitzHit").textContent = 0;
+  $("blitzMiss").textContent = 0;
+  $("blitzFeedback").className = "feedback";
+  showScreen("screen-mp-blitz");
+  blitzNext();
+  blitzTick();
+}
+
+function blitzTick() {
+  if (blitz.paused) return;
+  mpTimeout(() => {
+    blitz.timeLeft--;
+    const s = blitz.timeLeft % 60;
+    $("blitzTime").textContent = `0:${String(s).padStart(2,"0")}`;
+    $("blitzTimebar").style.width = (blitz.timeLeft / BLITZ_TIME * 100) + "%";
+    if (blitz.timeLeft <= 0) {
+      mp.scores[blitz.idx] = blitz.hit;
+      const next = blitz.idx + 1;
+      if (next >= mp.players.length) {
+        showMpResults("Lightning Blitz Results! ⚡", "Most correct answers in 30s wins", "⚡");
+      } else {
+        showPassScreen(next, () => blitzBeginTurn(next));
+      }
+    } else {
+      blitzTick();
+    }
+  }, 1000);
+}
+
+function blitzNext() {
+  blitz.current = twoOp(pick(["add","sub","mul"]), 2, 20);
+  blitz.locked = false;
+  $("blitzExpr").innerHTML = exprHTML(blitz.current.parts);
+  const opts = shuffle([blitz.current.answer, ...makeDistractors(blitz.current.answer)]);
+  const wrap = $("blitzChoices");
+  wrap.innerHTML = "";
+  for (const opt of opts) {
+    const btn = document.createElement("button");
+    btn.className = "choice";
+    btn.textContent = opt;
+    btn.addEventListener("click", () => {
+      if (blitz.locked || blitz.timeLeft <= 0) return;
+      blitz.locked = true;
+      const fb = $("blitzFeedback");
+      if (opt === blitz.current.answer) {
+        blitz.hit++;
+        $("blitzHit").textContent = blitz.hit;
+        btn.classList.add("good");
+        fb.className = "feedback good show";
+        $("blitzFbText").textContent = "✓ Correct!";
+      } else {
+        blitz.miss++;
+        $("blitzMiss").textContent = blitz.miss;
+        btn.classList.add("bad");
+        fb.className = "feedback bad show";
+        $("blitzFbText").textContent = "✗ Not quite";
+      }
+      mpTimeout(blitzNext, 400);
+    });
+    wrap.appendChild(btn);
+  }
+}
+
+/* ==================================================================
+   MP 8 — NUMBER WAR
+   ================================================================== */
+let war = {};
+const WAR_ROUNDS = 8;
+
+$("warQuit").addEventListener("click", () => { clearMpTimers(); showTab("home"); document.body.classList.remove("in-game"); });
+
+function startMpWar() {
+  mp.scores = mp.players.map(() => 0);
+  mp.currentIdx = 0;
+  war = { round: 0 };
+  showPassScreen(0, () => warBeginTurn(0));
+}
+
+function warBeginTurn(idx) {
+  war.idx = idx;
+  war.locked = false;
+  renderPlayerHud($("warPlayerHud"), idx);
+  showScreen("screen-mp-war");
+
+  // Deal two random "cards" (values 1-13)
+  war.cardA = randInt(1, 13);
+  war.cardB = randInt(1, 13);
+  war.cardLabels = ["♠ " + war.cardA, "♥ " + war.cardB];
+  war.higher = Math.max(war.cardA, war.cardB);
+  war.lower = Math.min(war.cardA, war.cardB);
+
+  // Generate a math problem whose answer is the higher card
+  const prob = { parts: [war.higher], answer: war.higher };
+  if (war.higher > war.lower && war.lower > 0) {
+    prob.parts = [war.higher + war.lower, "−", war.lower];
+    prob.answer = war.higher;
+  } else {
+    prob.parts = [war.higher - 1, "+", 1];
+    prob.answer = war.higher;
+  }
+  war.prob = prob;
+
+  $("warKicker").textContent = `Round ${war.round + 1} / ${WAR_ROUNDS} — ${mp.players[idx]}'s turn`;
+  $("warExpr").innerHTML = exprHTML(prob.parts);
+  $("warCards").innerHTML = `
+    <div class="stat-card" style="text-align:center;font-size:22px;font-weight:700;">${war.cardLabels[0]}</div>
+    <div class="stat-card" style="text-align:center;font-size:22px;font-weight:700;">${war.cardLabels[1]}</div>`;
+
+  const opts = shuffle([war.higher, ...makeDistractors(war.higher)]);
+  const wrap = $("warChoices");
+  wrap.innerHTML = "";
+  $("warFeedback").className = "feedback";
+  for (const opt of opts) {
+    const btn = document.createElement("button");
+    btn.className = "choice";
+    btn.textContent = opt;
+    btn.addEventListener("click", () => {
+      if (war.locked) return;
+      war.locked = true;
+      const fb = $("warFeedback");
+      if (opt === war.higher) {
+        mp.scores[idx]++;
+        btn.classList.add("good");
+        fb.className = "feedback good show";
+        $("warFbText").textContent = `✓ Correct! ${mp.players[idx]} wins the card!`;
+      } else {
+        btn.classList.add("bad");
+        wrap.querySelectorAll(".choice").forEach(b => { if (+b.textContent === war.higher) b.classList.add("good"); });
+        fb.className = "feedback bad show";
+        $("warFbText").textContent = `✗ It was ${war.higher}`;
+      }
+      war.round++;
+      mpTimeout(() => {
+        const next = (idx + 1) % mp.players.length;
+        if (war.round >= WAR_ROUNDS) {
+          showMpResults("Number War Results! 🃏", "Most cards claimed wins", "🃏");
+        } else {
+          showPassScreen(next, () => warBeginTurn(next));
+        }
+      }, 700);
+    });
+    wrap.appendChild(btn);
+  }
+}
+
+/* ==================================================================
+   MP 9 — MEMORY MASTERS (shared board, take turns)
+   ================================================================== */
+let mm = {};
+const MM_EMOJI = ["🍕","🌈","🦊","🎸","🏆","🚂","🐬","💎"];
+
+$("mmQuit").addEventListener("click", () => { clearMpTimers(); showTab("home"); document.body.classList.remove("in-game"); });
+
+function startMpMemory() {
+  mp.scores = mp.players.map(() => 0);
+  mp.currentIdx = 0;
+  mm = { cards: [], open: [], lock: false, round: 0, totalPairs: 8 };
+  mmBuildBoard();
+  showScreen("screen-mp-memory");
+  mmUpdateHUD();
+}
+
+function mmBuildBoard() {
+  mm.cards = shuffle([...MM_EMOJI, ...MM_EMOJI]).map(v => ({ v, done: false }));
+  mm.open = [];
+  mm.pairsLeft = 8;
+  const grid = $("mmGrid");
+  grid.innerHTML = "";
+  mm.cards.forEach((card, i) => {
+    const btn = document.createElement("button");
+    btn.className = "mem-card";
+    btn.textContent = "?";
+    btn.addEventListener("click", () => mmFlip(i, btn));
+    grid.appendChild(btn);
+  });
+}
+
+function mmUpdateHUD() {
+  $("mmPairsLeft").textContent = mm.pairsLeft;
+  $("mmTurnName").textContent = mp.players[mp.currentIdx];
+  $("mmRound").textContent = mm.round + 1;
+  $("mmTurnName").style.color = PLAYER_COLORS[mp.currentIdx];
+}
+
+function mmFlip(i, btn) {
+  if (mm.lock || btn.classList.contains("done") || mm.open.some(o => o.i === i)) return;
+  const card = mm.cards[i];
+  if (card.done) return;
+  btn.textContent = card.v;
+  btn.classList.add("open");
+  mm.open.push({ i, btn });
+  if (mm.open.length < 2) return;
+
+  const [a, b] = mm.open;
+  mm.open = [];
+  mm.lock = true;
+
+  if (mm.cards[a.i].v === mm.cards[b.i].v) {
+    mm.cards[a.i].done = mm.cards[b.i].done = true;
+    [a.btn, b.btn].forEach(el => { el.classList.remove("open"); el.classList.add("done"); });
+    mp.scores[mp.currentIdx]++;
+    mm.pairsLeft--;
+    mm.lock = false;
+    mmUpdateHUD();
+    announce(`${mp.players[mp.currentIdx]} matched a pair!`);
+    if (mm.pairsLeft <= 0) {
+      mm.round++;
+      if (mm.round >= 2) {
+        showMpResults("Memory Masters Results! 🧠", "Most pairs found wins", "🧠");
+        return;
+      }
+      mpTimeout(() => { mmBuildBoard(); mmUpdateHUD(); }, 800);
+    }
+  } else {
+    mpTimeout(() => {
+      [a.btn, b.btn].forEach(el => { el.textContent = "?"; el.classList.remove("open"); });
+      mm.lock = false;
+      // Next player's turn
+      const next = (mp.currentIdx + 1) % mp.players.length;
+      mp.currentIdx = next;
+      mmUpdateHUD();
+    }, 700);
+  }
+}
+
+/* ==================================================================
+   MP 10 — DICE DASH
+   ================================================================== */
+let dice = {};
+const DICE_ROUNDS = 5;
+const DICE_FACES = ["1️⃣","2️⃣","3️⃣","4️⃣","5️⃣","6️⃣"];
+
+$("diceQuit").addEventListener("click", () => { clearMpTimers(); showTab("home"); document.body.classList.remove("in-game"); });
+
+function startMpDice() {
+  mp.scores = mp.players.map(() => 0);
+  mp.currentIdx = 0;
+  dice = { round: 0 };
+  showPassScreen(0, () => diceBeginTurn(0));
+}
+
+function diceBeginTurn(idx) {
+  dice.idx = idx;
+  dice.d1 = null; dice.d2 = null; dice.op = null;
+  dice.locked = false;
+  renderPlayerHud($("dicePlayerHud"), idx);
+  showScreen("screen-mp-dice");
+  $("diceKicker").textContent = `${mp.players[idx]}'s Turn — Round ${Math.floor(dice.round / mp.players.length) + 1} / ${DICE_ROUNDS}`;
+  $("die1").textContent = "🎲";
+  $("die2").textContent = "🎲";
+  $("diceResult").textContent = "";
+  $("diceOp").textContent = "×";
+  $("diceAnswerArea").innerHTML = "";
+  $("diceFeedback").className = "feedback";
+
+  [$("die1"), $("die2")].forEach((die, di) => {
+    die.onclick = () => {
+      if (dice.locked) return;
+      die.classList.add("rolling");
+      mpTimeout(() => {
+        const val = randInt(1, 6);
+        if (di === 0) dice.d1 = val; else dice.d2 = val;
+        die.textContent = DICE_FACES[val - 1];
+        die.classList.remove("rolling");
+        if (dice.d1 && dice.d2) diceShowProblem();
+      }, 400);
+    };
+  });
+}
+
+function diceShowProblem() {
+  dice.op = pick(["+", "×"]);
+  const sym = dice.op;
+  $("diceOp").textContent = sym;
+  const answer = sym === "+" ? dice.d1 + dice.d2 : dice.d1 * dice.d2;
+  dice.answer = answer;
+  $("diceResult").textContent = "= ?";
+  $("diceKicker").textContent = `${DICE_FACES[dice.d1-1]} ${sym} ${DICE_FACES[dice.d2-1]} = ?`;
+
+  const opts = shuffle([answer, ...makeDistractors(answer)]);
+  const area = $("diceAnswerArea");
+  area.innerHTML = "";
+  const wrap = document.createElement("div");
+  wrap.className = "choices";
+  for (const opt of opts) {
+    const btn = document.createElement("button");
+    btn.className = "choice";
+    btn.textContent = opt;
+    btn.addEventListener("click", () => {
+      if (dice.locked) return;
+      dice.locked = true;
+      const fb = $("diceFeedback");
+      if (opt === answer) {
+        mp.scores[dice.idx] += answer;
+        btn.classList.add("good");
+        $("diceResult").textContent = "= " + answer;
+        fb.className = "feedback good show";
+        $("diceFbText").textContent = `✓ +${answer} points!`;
+      } else {
+        btn.classList.add("bad");
+        wrap.querySelectorAll(".choice").forEach(b => { if (+b.textContent === answer) b.classList.add("good"); });
+        $("diceResult").textContent = "= " + answer;
+        fb.className = "feedback bad show";
+        $("diceFbText").textContent = `✗ It was ${answer}`;
+      }
+      dice.round++;
+      mpTimeout(() => {
+        const next = (dice.idx + 1) % mp.players.length;
+        const totalRounds = DICE_ROUNDS * mp.players.length;
+        if (dice.round >= totalRounds) {
+          showMpResults("Dice Dash Results! 🎲", "Highest total points wins", "🎲");
+        } else {
+          showPassScreen(next, () => diceBeginTurn(next));
+        }
+      }, 800);
+    });
+    wrap.appendChild(btn);
+  }
+  area.appendChild(wrap);
+}
+
+/* ==================================================================
+   MP 11 — SURVIVOR MATH
+   ================================================================== */
+let survivor = {};
+
+$("survivorQuit").addEventListener("click", () => { clearMpTimers(); showTab("home"); document.body.classList.remove("in-game"); });
+
+function startMpSurvivor() {
+  mp.scores = mp.players.map(() => 0);
+  mp.eliminated = mp.players.map(() => false);
+  mp.currentIdx = 0;
+  survivor = { round: 0, activeCount: mp.players.length };
+  showScreen("screen-mp-survivor");
+  survivorUpdatePlayers();
+  survivorNext();
+}
+
+function survivorUpdatePlayers() {
+  $("survivorPlayers").innerHTML = mp.players.map((name, i) => `
+    <div class="survivor-chip${mp.eliminated[i] ? " out" : ""}">
+      <div class="survivor-chip-dot" style="background:${PLAYER_COLORS[i]}"></div>
+      ${name}
+    </div>`).join("");
+}
+
+function survivorNext() {
+  clearMpTimers();
+  // Skip eliminated players
+  let tries = 0;
+  while (mp.eliminated[mp.currentIdx] && tries < mp.players.length) {
+    mp.currentIdx = (mp.currentIdx + 1) % mp.players.length;
+    tries++;
+  }
+  const idx = mp.currentIdx;
+  survivor.current = genSprintProblem(survivor.round);
+  survivor.locked = false;
+  $("survivorKicker").textContent = `${mp.players[idx]}'s turn — answer or you're out!`;
+  $("survivorExpr").innerHTML = exprHTML(survivor.current.parts);
+  $("survivorFeedback").className = "feedback";
+  survivorUpdatePlayers();
+
+  const opts = shuffle([survivor.current.answer, ...makeDistractors(survivor.current.answer)]);
+  const wrap = $("survivorChoices");
+  wrap.innerHTML = "";
+  for (const opt of opts) {
+    const btn = document.createElement("button");
+    btn.className = "choice";
+    btn.textContent = opt;
+    btn.addEventListener("click", () => {
+      if (survivor.locked) return;
+      survivor.locked = true;
+      const fb = $("survivorFeedback");
+      if (opt === survivor.current.answer) {
+        mp.scores[idx]++;
+        btn.classList.add("good");
+        fb.className = "feedback good show";
+        $("survivorFbText").textContent = `✓ Safe! ${mp.players[idx]} survives.`;
+      } else {
+        btn.classList.add("bad");
+        wrap.querySelectorAll(".choice").forEach(b => { if (+b.textContent === survivor.current.answer) b.classList.add("good"); });
+        mp.eliminated[idx] = true;
+        survivor.activeCount--;
+        fb.className = "feedback bad show";
+        $("survivorFbText").textContent = `✗ ${mp.players[idx]} is eliminated!`;
+      }
+      if (survivor.activeCount <= 1) {
+        const winner = mp.eliminated.findIndex(e => !e);
+        if (winner >= 0) mp.scores[winner] += 20;
+        mpTimeout(() => showMpResults("Survivor Results! 🔥", `${winner >= 0 ? mp.players[winner] : "Nobody"} survived!`, "🔥"), 1000);
+        return;
+      }
+      survivor.round++;
+      mp.currentIdx = (idx + 1) % mp.players.length;
+      mpTimeout(survivorNext, 900);
+    });
+    wrap.appendChild(btn);
+  }
+}
+
+/* ==================================================================
+   MP 12 — SPEED QUIZ BATTLE
+   ================================================================== */
+let sq = {};
+const SQ_ROUNDS = 10;
+const SQ_ANSWER_TIME = 8;
+const SQ_COLORS = ["#7C3AED","#059669","#D97706","#DC2626"];
+
+$("sqQuit").addEventListener("click", () => { clearMpTimers(); showTab("home"); document.body.classList.remove("in-game"); });
+
+function startMpSpeedQuiz() {
+  mp.scores = mp.players.map(() => 0);
+  sq = { round: 0, buzzedIdx: null, answerTimer: 0, locked: false, current: null };
+  showScreen("screen-mp-speedquiz");
+  sqBuildBuzzGrid();
+  sqNext();
+}
+
+function sqBuildBuzzGrid() {
+  const grid = $("sqBuzzGrid");
+  grid.innerHTML = "";
+  mp.players.forEach((name, i) => {
+    const btn = document.createElement("button");
+    btn.className = "buzz-btn";
+    btn.style.background = SQ_COLORS[i];
+    btn.style.opacity = "1";
+    btn.id = "sqBuzz" + i;
+    btn.innerHTML = `<div style="font-size:22px;margin-bottom:4px;">${name[0].toUpperCase()}</div><div>${name}</div><div style="font-size:12px;margin-top:2px;opacity:0.8">Score: <span id="sqBuzzScore${i}">${mp.scores[i]}</span></div>`;
+    btn.addEventListener("click", () => sqBuzz(i));
+    grid.appendChild(btn);
+  });
+}
+
+function sqUpdateScores() {
+  mp.players.forEach((_, i) => {
+    const el = $("sqBuzzScore" + i);
+    if (el) el.textContent = mp.scores[i];
+  });
+  const best = mp.scores.indexOf(Math.max(...mp.scores));
+  $("sqLeader").textContent = mp.players[best] + " (" + mp.scores[best] + ")";
+}
+
+function sqNext() {
+  sq.current = genSprintProblem(sq.round);
+  sq.locked = false;
+  sq.buzzedIdx = null;
+  $("sqRound").textContent = `${sq.round + 1}/${SQ_ROUNDS}`;
+  $("sqExpr").innerHTML = exprHTML(sq.current.parts);
+  $("sqFeedback").className = "feedback";
+  $("sqAnswerInput").className = "buzz-answer-input";
+  $("sqAnswerInput").value = "";
+  $("sqTimer").textContent = "—";
+  sqUpdateScores();
+
+  // Re-enable all buzz buttons
+  mp.players.forEach((_, i) => {
+    const btn = $("sqBuzz" + i);
+    if (btn) { btn.disabled = false; btn.classList.remove("buzzed"); }
+  });
+}
+
+function sqBuzz(playerIdx) {
+  if (sq.locked || sq.buzzedIdx !== null) return;
+  sq.buzzedIdx = playerIdx;
+  sq.answerTimer = SQ_ANSWER_TIME;
+  $("sqTimer").textContent = sq.answerTimer;
+  $("sqTimer").style.color = "var(--accent)";
+
+  // Disable other buzz buttons
+  mp.players.forEach((_, i) => {
+    const btn = $("sqBuzz" + i);
+    if (btn) { btn.disabled = i !== playerIdx; if (i === playerIdx) btn.classList.add("buzzed"); }
+  });
+
+  const input = $("sqAnswerInput");
+  input.className = "buzz-answer-input show";
+  input.value = "";
+  input.focus();
+  input.style.borderColor = SQ_COLORS[playerIdx];
+  input.style.boxShadow = `0 0 14px ${SQ_COLORS[playerIdx]}33`;
+
+  const tickTimer = mpInterval(() => {
+    sq.answerTimer--;
+    $("sqTimer").textContent = sq.answerTimer;
+    if (sq.answerTimer <= 3) $("sqTimer").style.color = "var(--red)";
+    if (sq.answerTimer <= 0) {
+      clearInterval(tickTimer);
+      sqTimeOut(playerIdx);
+    }
+  }, 1000);
+  sq.tickTimer = tickTimer;
+}
+
+$("sqAnswerInput").addEventListener("input", e => {
+  if (sq.buzzedIdx === null) return;
+  const val = e.target.value.replace(/[^0-9]/g,"");
+  e.target.value = val;
+  if (!val) return;
+  const typed = parseInt(val, 10);
+  if (typed === sq.current.answer) {
+    clearInterval(sq.tickTimer);
+    sq.locked = true;
+    mp.scores[sq.buzzedIdx]++;
+    const fb = $("sqFeedback");
+    fb.className = "feedback good show";
+    $("sqFbText").textContent = `✓ ${mp.players[sq.buzzedIdx]} gets the point!`;
+    $("sqAnswerInput").className = "buzz-answer-input";
+    sq.round++;
+    sqUpdateScores();
+    if (sq.round >= SQ_ROUNDS) {
+      mpTimeout(() => showMpResults("Speed Quiz Results! 🎯", "Fastest fingers win!", "🎯"), 800);
+    } else {
+      mpTimeout(sqNext, 900);
+    }
+  } else if (val.length >= String(sq.current.answer).length) {
+    clearInterval(sq.tickTimer);
+    sqTimeOut(sq.buzzedIdx);
+  }
+});
+
+function sqTimeOut(playerIdx) {
+  sq.locked = false;
+  sq.buzzedIdx = null;
+  $("sqAnswerInput").className = "buzz-answer-input";
+  const fb = $("sqFeedback");
+  fb.className = "feedback bad show";
+  $("sqFbText").textContent = `✗ ${mp.players[playerIdx]} timed out!`;
+  $("sqTimer").textContent = "—";
+  $("sqTimer").style.color = "var(--text-soft)";
+  mp.players.forEach((_, i) => {
+    const btn = $("sqBuzz" + i);
+    if (btn) { btn.disabled = false; btn.classList.remove("buzzed"); }
+  });
+  mpTimeout(() => { fb.className = "feedback"; }, 1500);
+}
+
+/* renderHome — overrides earlier definition to add MP section */
+function renderHome() {
+  $("streakChip").textContent = getDayStreak().cur;
+  renderDailyCard($("dailyCardHome"));
+  renderModeList();
+  renderMpModeList();
+  const s = getDayStreak();
+  $("pStreak").textContent = s.cur;
+  $("pStreakBest").textContent = s.best;
+  $("pTotal").textContent = store.get("mfa-total-score", 0).toLocaleString();
+  $("pGames").textContent = store.get("mfa-games-played", 0).toLocaleString();
+  $("supaBadge").textContent = sb ? "⚡ Supabase" : "⚠ offline";
 }
 
 /* ==================================================================
