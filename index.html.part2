@@ -1,0 +1,799 @@
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 16px; padding: 14px 16px;
+}
+.mp-podium-rank { font-family: "Space Grotesk", sans-serif; font-size: 22px; font-weight: 700; width: 32px; text-align: center; }
+.mp-podium-avatar {
+  width: 42px; height: 42px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: "Space Grotesk", sans-serif; font-size: 18px; font-weight: 700; color: #fff;
+  flex-shrink: 0;
+}
+.mp-podium-name { flex: 1; font-weight: 700; font-size: 15px; }
+.mp-podium-score { font-family: "Space Grotesk", sans-serif; font-size: 22px; font-weight: 700; }
+.mp-podium-row.first { border-color: var(--gold); background: rgba(251,191,36,0.08); }
+
+/* ============================================================
+   IN-GAME PLAYER TRACKER (pass-and-play)
+   ============================================================ */
+.player-hud {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 8px 12px; margin-bottom: 12px;
+}
+.player-hud-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.player-hud-name { font-weight: 700; font-size: 14px; flex: 1; }
+.player-hud-scores { display: flex; gap: 6px; }
+.player-hud-chip {
+  background: var(--card2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 3px 8px; font-size: 12px; font-weight: 600; color: var(--text-soft);
+}
+.player-hud-chip.active { background: rgba(167,139,250,0.15); border-color: #A78BFA; color: #A78BFA; }
+
+/* Hot Potato special */
+.potato-zone {
+  flex: 1; border-radius: 22px; margin-bottom: 14px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 24px; text-align: center;
+  background: linear-gradient(135deg, rgba(251,191,36,0.12), rgba(251,191,36,0.04)), var(--card);
+  border: 2px solid rgba(251,191,36,0.4);
+}
+.potato-timer-big {
+  font-family: "Space Grotesk", sans-serif; font-size: 64px; font-weight: 700;
+  color: var(--gold); line-height: 1; margin-bottom: 8px; transition: color 0.2s;
+}
+.potato-timer-big.urgent { color: var(--red); animation: pulse 0.5s ease infinite alternate; }
+@keyframes pulse { from { transform: scale(1); } to { transform: scale(1.06); } }
+.potato-expr { font-family: "Space Grotesk", sans-serif; font-size: clamp(26px,8vw,38px); font-weight: 700; margin-bottom: 16px; }
+
+/* Dice Dash */
+.dice-row { display: flex; align-items: center; justify-content: center; gap: 16px; margin: 14px 0; }
+.die {
+  width: 72px; height: 72px; border-radius: 16px;
+  background: var(--card2); border: 2px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 36px; cursor: pointer;
+  transition: transform 0.15s, border-color 0.15s;
+  user-select: none;
+}
+.die:active { transform: scale(0.92); }
+.die.rolling { animation: diceRoll 0.4s ease; }
+@keyframes diceRoll {
+  0% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(-15deg) scale(0.9); }
+  75% { transform: rotate(15deg) scale(0.9); }
+  100% { transform: rotate(0deg) scale(1); }
+}
+.dice-op { font-family: "Space Grotesk", sans-serif; font-size: 28px; font-weight: 700; color: var(--accent); }
+.dice-result { font-family: "Space Grotesk", sans-serif; font-size: 52px; font-weight: 700; text-align: center; color: var(--accent); }
+
+/* Survivor */
+.survivor-players { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 14px; }
+.survivor-chip {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 99px; padding: 7px 12px;
+  font-weight: 700; font-size: 13px; transition: all 0.2s;
+}
+.survivor-chip.out {
+  opacity: 0.3; text-decoration: line-through;
+  background: var(--red-soft); border-color: var(--red);
+}
+.survivor-chip-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+/* Speed quiz buzz-in */
+.buzz-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.buzz-btn {
+  padding: 28px 8px; border-radius: 18px; font-family: "Space Grotesk", sans-serif;
+  font-size: 16px; font-weight: 700; cursor: pointer; border: 2px solid transparent;
+  transition: all 0.12s; color: #fff;
+}
+.buzz-btn:active { transform: scale(0.96); }
+.buzz-btn.buzzed { transform: scale(1.04); box-shadow: 0 0 22px rgba(255,255,255,0.2); }
+.buzz-btn:disabled { opacity: 0.3; cursor: default; transform: none; }
+.buzz-question {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 16px; padding: 20px; text-align: center; margin-bottom: 14px;
+}
+.buzz-expr { font-family: "Space Grotesk", sans-serif; font-size: clamp(28px,9vw,44px); font-weight: 700; }
+.buzz-answer-input {
+  background: var(--card2); border: 2px solid #A78BFA;
+  box-shadow: 0 0 14px rgba(167,139,250,0.2);
+  color: var(--text); border-radius: 14px; padding: 14px;
+  font-size: 24px; font-weight: 700; font-family: "Space Grotesk", sans-serif;
+  text-align: center; caret-color: #A78BFA; width: 100%;
+  display: none;
+}
+.buzz-answer-input.show { display: block; }
+
+/* Theme cycle button */
+.theme-cycle-btn {
+  background: var(--card2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 7px 14px;
+  font-size: 13px; font-weight: 600; color: var(--text);
+  cursor: pointer; transition: border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.theme-cycle-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Expand / collapse sections */
+.expand-section { display: none; flex-direction: column; gap: 10px; margin-bottom: 0; }
+.expand-section.open { display: flex; }
+.load-more-btn {
+  background: transparent; border: 1px dashed var(--border);
+  border-radius: 12px; padding: 11px;
+  color: var(--text-soft); font-size: 13px; font-weight: 600;
+  cursor: pointer; text-align: center; width: 100%; margin-top: 4px;
+  transition: border-color 0.15s, color 0.15s;
+}
+.load-more-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Sprint level picker */
+.level-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+}
+.level-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 18px; padding: 18px 12px;
+  cursor: pointer; text-align: center;
+  transition: border-color 0.15s, transform 0.1s, box-shadow 0.15s;
+}
+.level-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 4px 18px var(--accent-glow); }
+.level-card:active { transform: scale(0.97); }
+.level-num { font-family: "Space Grotesk", sans-serif; font-size: 28px; font-weight: 700; color: var(--accent); margin-bottom: 6px; }
+.level-desc { font-size: 11.5px; color: var(--text-soft); margin-bottom: 8px; line-height: 1.4; }
+.level-best { font-size: 12px; font-weight: 600; color: var(--gold); }
+
+/* Improved mode-row hover */
+.mode-row:hover { border-color: var(--accent); transform: translateY(-1px); box-shadow: 0 4px 16px var(--accent-glow); }
+.mode-row:active { transform: scale(0.98); box-shadow: none; }
+.mp-mode-row:hover { border-color: #A78BFA; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(167,139,250,0.2); }
+.mp-mode-row:active { transform: scale(0.98); box-shadow: none; }
+
+/* Section dividers */
+.section-divider { height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent); margin: 8px 0; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Live region for screen-reader feedback -->
+  <div class="sr-only" id="liveRegion" role="status" aria-live="assertive"></div>
+
+  <!-- ============== HOME TAB ============== -->
+  <section class="screen active" id="tab-home">
+    <header class="topbar">
+      <div class="brand-wrap">
+        <div class="brand-icon" aria-hidden="true">🎮</div>
+        <div class="brand">MathFlow <span>Arcade</span></div>
+      </div>
+      <div class="streak-chip" title="Daily play streak">🔥 <span id="streakChip">0</span></div>
+    </header>
+
+    <div class="install-banner" id="installBanner">
+      <div class="install-icon" aria-hidden="true">⤓</div>
+      <div class="install-text">
+        <strong>Install MathFlow Arcade</strong>
+        <small id="installHint">Add to your home screen for the best experience.</small>
+      </div>
+      <button class="install-btn" id="installBtn">Install</button>
+      <button class="install-x" id="installX" aria-label="Dismiss install banner">✕</button>
+    </div>
+
+    <div id="dailyCardHome"><!-- daily challenge card rendered by JS --></div>
+
+    <div class="section-head">
+      <h2>Game Modes</h2>
+      <button class="section-link" id="seeAllBtn">See All</button>
+    </div>
+    <div class="mode-list" id="modeList"><!-- rendered by JS --></div>
+
+    <div class="mp-section-head">
+      <h2>Multiplayer Games</h2>
+      <div class="mp-badge">👥 Offline</div>
+    </div>
+    <div class="mp-mode-list" id="mpModeList"><!-- rendered by JS --></div>
+
+    <div class="section-head">
+      <h2>Your Progress</h2>
+      <div class="supa-badge" id="supaBadge">⚡ Supabase</div>
+    </div>
+    <div class="prog-grid">
+      <div class="prog-card">
+        <div class="p-label">🔥 Streak</div>
+        <div class="p-value"><span id="pStreak">0</span> <small>days</small></div>
+        <div class="p-sub">Best: <span id="pStreakBest">0</span></div>
+      </div>
+      <div class="prog-card">
+        <div class="p-label">🏆 Total Score</div>
+        <div class="p-value" id="pTotal">0</div>
+        <div class="p-sub">All Time</div>
+      </div>
+      <div class="prog-card">
+        <div class="p-label">🎮 Games Played</div>
+        <div class="p-value" id="pGames">0</div>
+        <div class="p-sub">All Time</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== CHALLENGES TAB ============== -->
+  <section class="screen" id="tab-challenges">
+    <div class="section-head" style="margin-top:6px;"><h2>Daily Challenge</h2></div>
+    <div id="dailyCardChal"></div>
+    <div class="section-head"><h2>Last 7 days</h2></div>
+    <div class="week-row" id="weekRow"></div>
+    <div class="section-head"><h2>How streaks work</h2></div>
+    <div class="info-card">
+      Play <b>any game</b> once a day to keep your 🔥 streak alive.
+      Complete the daily <b>Number Flow</b> challenge — 15 problems before the clock
+      runs out — to earn its ⭐ for the day. Miss a day and the streak resets.
+    </div>
+  </section>
+
+  <!-- ============== STATS TAB ============== -->
+  <section class="screen" id="tab-stats">
+    <div class="section-head" style="margin-top:6px;"><h2>Your progress</h2></div>
+    <div class="chip-row" id="statChips"></div>
+    <div class="chart-card">
+      <div class="chart-head">
+        <h3>Over time</h3>
+        <div class="metric-toggle" role="group" aria-label="Chart metric">
+          <button class="metric-btn" data-metric="score" aria-pressed="true">Score</button>
+          <button class="metric-btn" data-metric="accuracy" aria-pressed="false">Accuracy</button>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="progressChart" role="img" aria-label="Line chart of your performance over time"></canvas>
+        <div class="chart-empty" id="chartEmpty" style="display:none;"></div>
+      </div>
+    </div>
+    <div class="summary-row">
+      <div class="summary-card"><b id="sBest">—</b><small>Best</small></div>
+      <div class="summary-card"><b id="sAvg">—</b><small>Average</small></div>
+      <div class="summary-card"><b id="sCount">—</b><small>Sessions</small></div>
+    </div>
+  </section>
+
+  <!-- ============== PROFILE TAB ============== -->
+  <section class="screen" id="tab-profile">
+    <div class="profile-head">
+      <div class="avatar" id="avatar">P</div>
+      <div style="flex:1">
+        <label class="sr-only" for="nameInput">Your name</label>
+        <input class="name-input" id="nameInput" maxlength="20" placeholder="Player" />
+        <div style="color:var(--text-soft); font-size:12px; margin-top:3px;">Tap to edit your name</div>
+      </div>
+    </div>
+
+    <div class="prof-list">
+      <div class="prof-row">
+        <div class="pr-icon" aria-hidden="true" id="themeIcon">🌑</div>
+        <div class="pr-label">Theme</div>
+        <button class="theme-cycle-btn" id="themeBtn" aria-label="Cycle theme">🌑 Dark</button>
+      </div>
+      <div class="prof-row">
+        <div class="pr-icon" aria-hidden="true">⚡</div>
+        <div class="pr-label">Cloud sync</div>
+        <div class="pr-value" id="syncStatus">—</div>
+      </div>
+      <div class="prof-row" id="installRow" style="display:none;">
+        <div class="pr-icon" aria-hidden="true">⤓</div>
+        <div class="pr-label">Install app</div>
+        <button class="install-btn" id="installBtn2">Install</button>
+      </div>
+    </div>
+
+    <div class="prof-list">
+      <div class="prof-row"><div class="pr-icon">🔥</div><div class="pr-label">Day streak</div><div class="pr-value" id="profStreak">—</div></div>
+      <div class="prof-row"><div class="pr-icon">🏆</div><div class="pr-label">Total score</div><div class="pr-value" id="profTotal">—</div></div>
+      <div class="prof-row"><div class="pr-icon">🎮</div><div class="pr-label">Games played</div><div class="pr-value" id="profGames">—</div></div>
+    </div>
+  </section>
+
+  <!-- ============== SPRINT LEVEL PICKER ============== -->
+  <section class="screen" id="screen-sprint-levels">
+    <div class="game-head">
+      <button class="gh-back" id="sprintLevelsBack" aria-label="Back to home">←</button>
+      <h1>Math Sprint</h1>
+      <span style="width:40px"></span>
+    </div>
+    <p class="stage-hint" style="text-align:left;margin-bottom:18px;">Choose a difficulty level — all 4 operations, progressively harder</p>
+    <div class="level-grid" id="levelGrid"></div>
+  </section>
+
+  <!-- ============== MATH SPRINT ============== -->
+  <section class="screen" id="screen-sprint">
+    <div class="game-head">
+      <button class="gh-back js-quit" aria-label="Leave round">←</button>
+      <h1>Math Sprint</h1>
+      <button class="gh-pause js-pause" aria-label="Pause">⏸</button>
+    </div>
+    <div class="hud">
+      <div class="hud-cell"><small>TIME</small><b class="js-time">0:60</b><div class="hud-timebar"><i class="js-timebar"></i></div></div>
+      <div class="hud-cell"><small>SCORE</small><b class="js-score">0</b></div>
+      <div class="hud-cell"><small>STREAK</small><b class="js-streak">x0</b></div>
+    </div>
+    <div class="qprogress">
+      <div class="qp-bar"><i id="sprintQBar"></i></div>
+      <div class="qp-row"><span id="sprintQLabel">Question 1 of 20</span><span id="sprintQPct">0%</span></div>
+    </div>
+    <div class="problem-card">
+      <div class="p-kicker">Solve:</div>
+      <div class="problem-expr" id="sprintExpr" aria-live="polite"></div>
+    </div>
+    <div class="choices" id="sprintChoices"></div>
+    <div class="powerups">
+      <button class="power" id="pwTime">🕑 +10s<span class="pcount" id="pwTimeN">2</span></button>
+      <button class="power" id="pwFifty">◐ 50/50<span class="pcount" id="pwFiftyN">2</span></button>
+      <button class="power" id="pwSkip">⏭ Skip<span class="pcount" id="pwSkipN">1</span></button>
+    </div>
+    <div class="feedback" id="sprintFeedback"><span id="sprintFbText"></span><span id="sprintFbPts"></span></div>
+  </section>
+
+  <!-- ============== PATTERN MATCH ============== -->
+  <section class="screen" id="screen-pattern">
+    <div class="game-head">
+      <button class="gh-back js-quit" aria-label="Leave round">←</button>
+      <h1>Pattern Match</h1>
+      <button class="gh-pause js-pause" aria-label="Pause">⏸</button>
+    </div>
+    <div class="hud">
+      <div class="hud-cell"><small>TIME</small><b class="js-time">0:60</b><div class="hud-timebar"><i class="js-timebar"></i></div></div>
+      <div class="hud-cell"><small>SCORE</small><b class="js-score">0</b></div>
+      <div class="hud-cell"><small>STREAK</small><b class="js-streak">x0</b></div>
+    </div>
+    <p class="stage-hint" style="margin-bottom:10px;">Find the option that matches this pattern</p>
+    <div class="pattern-target"><div class="pgrid" id="patternTarget"></div></div>
+    <div class="pattern-options" id="patternOptions"></div>
+  </section>
+
+  <!-- ============== MEMORY GRID ============== -->
+  <section class="screen" id="screen-memory">
+    <div class="game-head">
+      <button class="gh-back js-quit" aria-label="Leave round">←</button>
+      <h1>Memory Grid</h1>
+      <button class="gh-pause js-pause" aria-label="Pause">⏸</button>
+    </div>
+    <div class="hud">
+      <div class="hud-cell"><small>TIME</small><b class="js-time">0:60</b><div class="hud-timebar"><i class="js-timebar"></i></div></div>
+      <div class="hud-cell"><small>PAIRS</small><b class="js-score">0</b></div>
+      <div class="hud-cell"><small>STREAK</small><b class="js-streak">x0</b></div>
+    </div>
+    <p class="stage-hint" style="margin-bottom:12px;">Flip cards and match the pairs</p>
+    <div class="mem-grid" id="memGrid"></div>
+  </section>
+
+  <!-- ============== WORD SCRAMBLE ============== -->
+  <section class="screen" id="screen-scramble">
+    <div class="game-head">
+      <button class="gh-back js-quit" aria-label="Leave round">←</button>
+      <h1>Word Scramble</h1>
+      <button class="gh-pause js-pause" aria-label="Pause">⏸</button>
+    </div>
+    <div class="hud">
+      <div class="hud-cell"><small>TIME</small><b class="js-time">0:60</b><div class="hud-timebar"><i class="js-timebar"></i></div></div>
+      <div class="hud-cell"><small>WORDS</small><b class="js-score">0</b></div>
+      <div class="hud-cell"><small>STREAK</small><b class="js-streak">x0</b></div>
+    </div>
+    <div class="center-stage">
+      <div class="scramble-word" id="scrambleWord"></div>
+      <label class="stage-hint" for="scrambleInput">Unscramble the word</label>
+      <input class="typed-input" id="scrambleInput" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+      <button class="skip-link" id="scrambleSkip">Skip word →</button>
+    </div>
+  </section>
+
+  <!-- ============== REACTION TAP ============== -->
+  <section class="screen" id="screen-reaction">
+    <div class="game-head">
+      <button class="gh-back js-quit" aria-label="Leave round">←</button>
+      <h1>Reaction Tap</h1>
+      <span style="width:40px"></span>
+    </div>
+    <div class="hud">
+      <div class="hud-cell"><small>ROUND</small><b id="reactRound">1/5</b></div>
+      <div class="hud-cell"><small>BEST</small><b id="reactBest">—</b></div>
+      <div class="hud-cell"><small>LAST</small><b id="reactLast">—</b></div>
+    </div>
+    <div class="reaction-zone" id="reactionZone">
+      <div class="rz-big" id="rzBig">Tap to start</div>
+      <div class="rz-sub" id="rzSub">Wait for the green flash, then tap as fast as you can</div>
+    </div>
+  </section>
+
+  <!-- ============== NUMBER FLOW (daily) ============== -->
+  <section class="screen" id="screen-daily">
+    <div class="game-head">
+      <button class="gh-back js-quit" aria-label="Leave round">←</button>
+      <h1>Number Flow</h1>
+      <button class="gh-pause js-pause" aria-label="Pause">⏸</button>
+    </div>
+    <div class="hud">
+      <div class="hud-cell"><small>TIME</small><b class="js-time">1:30</b><div class="hud-timebar"><i class="js-timebar"></i></div></div>
+      <div class="hud-cell"><small>SOLVED</small><b class="js-score">0</b></div>
+      <div class="hud-cell"><small>STREAK</small><b class="js-streak">x0</b></div>
+    </div>
+    <div class="qprogress">
+      <div class="qp-bar"><i id="dailyQBar"></i></div>
+      <div class="qp-row"><span id="dailyQLabel">Problem 1 of 15</span><span>⭐ daily</span></div>
+    </div>
+    <div class="center-stage">
+      <div class="big-problem" id="dailyExpr" aria-live="polite"></div>
+      <label class="stage-hint" for="dailyInput">Type the answer — it advances automatically</label>
+      <input class="typed-input" id="dailyInput" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" />
+    </div>
+  </section>
+
+  <!-- ============== MP: MATH DUEL (face-to-face) ============== -->
+  <section class="f2f-screen" id="screen-f2f-duel">
+    <div class="f2f-half top" id="duelTopHalf">
+      <div class="f2f-score-bar" id="duelScoreTop">
+        <div class="f2f-score-name" id="duelNameTop">Player 1</div>
+        <div class="f2f-score-num" id="duelScoreNumTop">0</div>
+      </div>
+      <div class="f2f-answers" id="duelAnswersTop" style="margin-top:12px;"></div>
+    </div>
+    <div class="f2f-divider">
+      <div class="f2f-center-score">
+        <div class="f2f-cs-name" id="duelCSName1">P1</div>
+        <div class="f2f-cs-score" id="duelCSScore1">0</div>
+        <div class="f2f-cs-divider"></div>
+        <div class="f2f-cs-score" id="duelCSScore2">0</div>
+        <div class="f2f-cs-name" id="duelCSName2">P2</div>
+      </div>
+    </div>
+    <div class="f2f-half bottom" id="duelBottomHalf">
+      <div class="f2f-question" id="duelQuestion">5 × 7 = ?</div>
+      <div class="f2f-answers" id="duelAnswersBottom"></div>
+      <div class="f2f-score-bar" style="margin-top:12px;" id="duelScoreBottom">
+        <div class="f2f-score-name" id="duelNameBottom">Player 2</div>
+        <div class="f2f-score-num" id="duelScoreNumBottom">0</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== MP: REACTION RACE (face-to-face) ============== -->
+  <section class="f2f-screen" id="screen-f2f-reaction">
+    <div class="f2f-half top" style="gap:10px;">
+      <div class="f2f-score-bar" id="rrScoreTop" style="margin-bottom:8px;">
+        <div class="f2f-score-name" id="rrNameTop">Player 1</div>
+        <div class="f2f-score-num" id="rrWinsTop">0</div>
+      </div>
+      <div class="f2f-tap-zone ready" id="rrZoneTop" style="min-height:80px;">
+        <div class="f2f-tap-label" id="rrLabelTop">Tap!</div>
+      </div>
+    </div>
+    <div class="f2f-divider">
+      <div class="f2f-center-score">
+        <div id="rrCSRound" style="font-size:13px;font-weight:700;color:var(--text-soft);">Round 1 / 7</div>
+        <div class="f2f-cs-divider"></div>
+        <div id="rrCSStatus" style="font-size:13px;font-weight:600;color:var(--accent);">Get Ready</div>
+      </div>
+    </div>
+    <div class="f2f-half bottom" style="gap:10px;">
+      <div class="f2f-tap-zone ready" id="rrZoneBottom" style="min-height:80px;">
+        <div class="f2f-tap-label" id="rrLabelBottom">Tap!</div>
+      </div>
+      <div class="f2f-score-bar" id="rrScoreBottom" style="margin-top:8px;">
+        <div class="f2f-score-name" id="rrNameBottom">Player 2</div>
+        <div class="f2f-score-num" id="rrWinsBottom">0</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== MP: TRUE/FALSE SHOWDOWN (face-to-face) ============== -->
+  <section class="f2f-screen" id="screen-f2f-truefalse">
+    <div class="f2f-half top" style="gap:10px;">
+      <div class="f2f-score-bar" id="tfScoreTop">
+        <div class="f2f-score-name" id="tfNameTop">Player 1</div>
+        <div class="f2f-score-num" id="tfScoreNumTop">0</div>
+      </div>
+      <div style="display:flex;gap:10px;width:100%;max-width:300px;margin-top:10px;">
+        <button class="f2f-tf-btn true-btn" id="tfTrueTop">✓ TRUE</button>
+        <button class="f2f-tf-btn false-btn" id="tfFalseTop">✗ FALSE</button>
+      </div>
+    </div>
+    <div class="f2f-divider" style="flex-direction:column;gap:4px;padding:10px 16px;">
+      <div style="color:var(--text-soft);font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;">Is this true?</div>
+      <div class="f2f-question" id="tfStatement" style="margin:0;font-size:clamp(18px,5vw,26px);">3 × 8 = 24</div>
+      <div style="color:var(--text-soft);font-size:12px;" id="tfRoundInfo">Round 1 / 10</div>
+    </div>
+    <div class="f2f-half bottom" style="gap:10px;">
+      <div style="display:flex;gap:10px;width:100%;max-width:300px;">
+        <button class="f2f-tf-btn true-btn" id="tfTrueBottom">✓ TRUE</button>
+        <button class="f2f-tf-btn false-btn" id="tfFalseBottom">✗ FALSE</button>
+      </div>
+      <div class="f2f-score-bar" style="margin-top:10px;">
+        <div class="f2f-score-name" id="tfNameBottom">Player 2</div>
+        <div class="f2f-score-num" id="tfScoreNumBottom">0</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== MP: NUMBER TUG-OF-WAR (face-to-face) ============== -->
+  <section class="f2f-screen" id="screen-f2f-tug">
+    <div class="f2f-half top" style="gap:10px;">
+      <div class="f2f-score-bar" id="tugScoreTop">
+        <div class="f2f-score-name" id="tugNameTop">Player 1</div>
+        <div class="f2f-score-num" id="tugScoreNumTop">5</div>
+      </div>
+      <div class="f2f-answers" id="tugAnswersTop" style="margin-top:10px;"></div>
+    </div>
+    <div class="f2f-divider" style="flex-direction:column;gap:6px;padding:10px 16px;">
+      <div class="f2f-question" id="tugQuestion" style="margin:0;font-size:clamp(18px,5vw,28px);">Loading…</div>
+      <div class="tug-rope-wrap">
+        <div class="tug-rope-track">
+          <div class="tug-rope-fill" id="tugFill" style="width:50%"></div>
+          <div class="tug-knot" id="tugKnot" style="left:50%"></div>
+        </div>
+        <div class="tug-labels"><span id="tugLabelLeft">Player 1</span><span id="tugLabelRight">Player 2</span></div>
+      </div>
+    </div>
+    <div class="f2f-half bottom" style="gap:10px;">
+      <div class="f2f-answers" id="tugAnswersBottom"></div>
+      <div class="f2f-score-bar" style="margin-top:10px;">
+        <div class="f2f-score-name" id="tugNameBottom">Player 2</div>
+        <div class="f2f-score-num" id="tugScoreNumBottom">5</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== MP: PASS SCREEN ============== -->
+  <section class="screen" id="screen-mp-pass">
+    <div class="pass-screen-wrap" id="passContent">
+      <div class="pass-avatar" id="passAvatar">A</div>
+      <div class="pass-name" id="passName">Player</div>
+      <div class="pass-sub" id="passSub">Get ready — it's your turn!</div>
+      <button class="pass-tap-hint" id="passTapBtn">Tap to start your turn →</button>
+    </div>
+  </section>
+
+  <!-- ============== MP: MATH TOURNAMENT ============== -->
+  <section class="screen" id="screen-mp-tournament">
+    <div class="game-head">
+      <button class="gh-back" id="tournQuit" aria-label="Leave">←</button>
+      <h1 id="tournTitle">Math Tournament</h1>
+      <button class="gh-pause" id="tournPause" aria-label="Pause">⏸</button>
+    </div>
+    <div class="player-hud" id="tournPlayerHud"></div>
+    <div class="hud">
+      <div class="hud-cell"><small>TIME</small><b class="js-time" id="tournTime">1:00</b><div class="hud-timebar"><i id="tournTimebar"></i></div></div>
+      <div class="hud-cell"><small>SCORE</small><b id="tournScore">0</b></div>
+      <div class="hud-cell"><small>SOLVED</small><b id="tournSolved">0</b></div>
+    </div>
+    <div class="problem-card">
+      <div class="p-kicker">Solve:</div>
+      <div class="problem-expr" id="tournExpr"></div>
+    </div>
+    <div class="choices" id="tournChoices"></div>
+    <div class="feedback" id="tournFeedback"><span id="tournFbText"></span><span id="tournFbPts"></span></div>
+  </section>
+
+  <!-- ============== MP: HOT POTATO MATH ============== -->
+  <section class="screen" id="screen-mp-potato">
+    <div class="game-head">
+      <button class="gh-back" id="potatoQuit" aria-label="Leave">←</button>
+      <h1>Hot Potato Math 🥔</h1>
+      <span style="width:40px;"></span>
+    </div>
+    <div class="player-hud" id="potatoPlayerHud"></div>
+    <div class="potato-zone" id="potatoZone">
+      <div class="potato-timer-big" id="potatoTimerBig">8</div>
+      <div class="potato-expr" id="potatoExpr">Loading…</div>
+      <div class="choices" id="potatoChoices" style="width:100%;max-width:340px;"></div>
+    </div>
+  </section>
+
+  <!-- ============== MP: LIGHTNING BLITZ ============== -->
+  <section class="screen" id="screen-mp-blitz">
+    <div class="game-head">
+      <button class="gh-back" id="blitzQuit" aria-label="Leave">←</button>
+      <h1>Lightning Blitz ⚡</h1>
+      <button class="gh-pause" id="blitzPause" aria-label="Pause">⏸</button>
+    </div>
+    <div class="player-hud" id="blitzPlayerHud"></div>
+    <div class="hud">
+      <div class="hud-cell"><small>TIME</small><b id="blitzTime">0:30</b><div class="hud-timebar"><i id="blitzTimebar"></i></div></div>
+      <div class="hud-cell"><small>HIT</small><b id="blitzHit">0</b></div>
+      <div class="hud-cell"><small>MISS</small><b id="blitzMiss">0</b></div>
+    </div>
+    <div class="problem-card">
+      <div class="problem-expr" id="blitzExpr"></div>
+    </div>
+    <div class="choices" id="blitzChoices"></div>
+    <div class="feedback" id="blitzFeedback"><span id="blitzFbText"></span><span></span></div>
+  </section>
+
+  <!-- ============== MP: NUMBER WAR ============== -->
+  <section class="screen" id="screen-mp-war">
+    <div class="game-head">
+      <button class="gh-back" id="warQuit" aria-label="Leave">←</button>
+      <h1>Number War 🃏</h1>
+      <span style="width:40px;"></span>
+    </div>
+    <div class="player-hud" id="warPlayerHud"></div>
+    <div class="problem-card" id="warProblemCard" style="margin-bottom:10px;">
+      <div class="p-kicker" id="warKicker">Solve to claim the higher card!</div>
+      <div class="problem-expr" id="warExpr">?</div>
+    </div>
+    <div class="stat-grid" id="warCards" style="margin-bottom:12px;"></div>
+    <div class="choices" id="warChoices"></div>
+    <div class="feedback" id="warFeedback"><span id="warFbText"></span><span></span></div>
+  </section>
+
+  <!-- ============== MP: MEMORY MASTERS ============== -->
+  <section class="screen" id="screen-mp-memory">
+    <div class="game-head">
+      <button class="gh-back" id="mmQuit" aria-label="Leave">←</button>
+      <h1>Memory Masters 🧠</h1>
+      <span style="width:40px;"></span>
+    </div>
+    <div class="player-hud" id="mmPlayerHud"></div>
+    <div class="hud">
+      <div class="hud-cell"><small>PAIRS LEFT</small><b id="mmPairsLeft">8</b></div>
+      <div class="hud-cell"><small>TURN</small><b id="mmTurnName" style="font-size:13px;">—</b></div>
+      <div class="hud-cell"><small>ROUND</small><b id="mmRound">1</b></div>
+    </div>
+    <div class="mem-grid" id="mmGrid" style="margin-top:6px;"></div>
+  </section>
+
+  <!-- ============== MP: DICE DASH ============== -->
+  <section class="screen" id="screen-mp-dice">
+    <div class="game-head">
+      <button class="gh-back" id="diceQuit" aria-label="Leave">←</button>
+      <h1>Dice Dash 🎲</h1>
+      <span style="width:40px;"></span>
+    </div>
+    <div class="player-hud" id="dicePlayerHud"></div>
+    <div class="problem-card">
+      <div class="p-kicker" id="diceKicker">Roll the dice!</div>
+      <div class="dice-row" id="diceRow">
+        <div class="die" id="die1">🎲</div>
+        <div class="dice-op" id="diceOp">×</div>
+        <div class="die" id="die2">🎲</div>
+      </div>
+      <div class="dice-result" id="diceResult" style="min-height:56px;"></div>
+    </div>
+    <div id="diceAnswerArea"></div>
+    <div class="feedback" id="diceFeedback"><span id="diceFbText"></span><span></span></div>
+  </section>
+
+  <!-- ============== MP: SURVIVOR MATH ============== -->
+  <section class="screen" id="screen-mp-survivor">
+    <div class="game-head">
+      <button class="gh-back" id="survivorQuit" aria-label="Leave">←</button>
+      <h1>Survivor Math 🔥</h1>
+      <span style="width:40px;"></span>
+    </div>
+    <div class="survivor-players" id="survivorPlayers"></div>
+    <div class="problem-card">
+      <div class="p-kicker" id="survivorKicker">Solve:</div>
+      <div class="problem-expr" id="survivorExpr"></div>
+    </div>
+    <div class="choices" id="survivorChoices"></div>
+    <div class="feedback" id="survivorFeedback"><span id="survivorFbText"></span><span></span></div>
+  </section>
+
+  <!-- ============== MP: SPEED QUIZ BATTLE ============== -->
+  <section class="screen" id="screen-mp-speedquiz">
+    <div class="game-head">
+      <button class="gh-back" id="sqQuit" aria-label="Leave">←</button>
+      <h1>Speed Quiz Battle 🎯</h1>
+      <span style="width:40px;"></span>
+    </div>
+    <div class="hud">
+      <div class="hud-cell"><small>QUESTION</small><b id="sqRound">1/10</b></div>
+      <div class="hud-cell" id="sqLeaderCell"><small>LEADING</small><b id="sqLeader" style="font-size:13px;">—</b></div>
+      <div class="hud-cell"><small>TIME</small><b id="sqTimer">—</b></div>
+    </div>
+    <div class="buzz-question">
+      <div class="p-kicker">What is…</div>
+      <div class="buzz-expr" id="sqExpr">Loading…</div>
+    </div>
+    <div class="buzz-grid" id="sqBuzzGrid"></div>
+    <input class="buzz-answer-input" id="sqAnswerInput" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="Type answer…" autocomplete="off" />
+    <div class="feedback" id="sqFeedback"><span id="sqFbText"></span><span></span></div>
+  </section>
+
+  <!-- ============== MP: MULTIPLAYER RESULTS ============== -->
+  <section class="screen" id="screen-mp-results">
+    <div class="results-icon" id="mpResIcon">🏆</div>
+    <h1 class="results-title" id="mpResTitle">Game Over!</h1>
+    <p class="results-sub" id="mpResSub">Here's how everyone did</p>
+    <div class="mp-podium" id="mpPodium"></div>
+    <button class="btn-accent wide-btn" id="mpPlayAgainBtn">Play Again</button>
+    <button class="btn-ghost wide-btn" id="mpHomeBtn">Back to Home</button>
+  </section>
+
+  <!-- ============== RESULTS ============== -->
+  <section class="screen" id="screen-results">
+    <div class="results-icon" id="resultsIcon">⚡</div>
+    <h1 class="results-title" id="resultsTitle">Round complete</h1>
+    <p class="results-sub" id="resultsSub"></p>
+    <div class="best-badge" id="bestBadge">🏆 New best!</div>
+    <div class="score-hero"><b id="resScore">0</b><small id="resScoreLabel">SCORE</small></div>
+    <div class="stat-grid" id="resStatGrid"></div>
+    <div class="save-status" id="saveStatus" role="status" aria-live="polite"></div>
+    <button class="btn-accent wide-btn" id="againBtn">Play again</button>
+    <button class="btn-ghost wide-btn" id="homeBtn">Back to home</button>
+  </section>
+
+</div>
+
+<!-- ============== TAB BAR ============== -->
+<nav class="tabbar" aria-label="Main">
+  <div class="tabbar-inner">
+    <button class="tab-btn" data-tab="home" aria-current="true">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>
+      Home
+    </button>
+    <button class="tab-btn" data-tab="challenges" aria-current="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4h12l-2.5 4L17 12H5"/></svg>
+      Challenges
+    </button>
+    <button class="tab-btn" data-tab="stats" aria-current="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21v-8M12 21V7M19 21V11"/></svg>
+      Stats
+    </button>
+    <button class="tab-btn" data-tab="profile" aria-current="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>
+      Profile
+    </button>
+  </div>
+</nav>
+
+<!-- ============== PLAYER SETUP OVERLAY ============== -->
+<div class="setup-overlay" id="setupOverlay">
+  <div class="setup-sheet">
+    <div class="setup-handle"></div>
+    <div class="setup-title" id="setupGameTitle">Math Duel</div>
+    <div class="setup-sub" id="setupGameSub">Choose how many players and enter your names</div>
+    <div class="player-count-row" id="playerCountRow"></div>
+    <div class="player-name-fields" id="playerNameFields"></div>
+    <button class="setup-start-btn" id="setupStartBtn">Let's Play! 🎮</button>
+    <button class="setup-cancel-btn" id="setupCancelBtn">Cancel</button>
+  </div>
+</div>
+
+<!-- ============== PAUSE OVERLAY ============== -->
+<div class="overlay" id="pauseOverlay" role="dialog" aria-modal="true" aria-labelledby="pauseTitle">
+  <div class="overlay-card">
+    <h2 id="pauseTitle">Paused</h2>
+    <p>Take a breath. The clock is stopped.</p>
+    <button class="btn-accent" id="resumeBtn">Resume</button>
+    <button class="btn-ghost" id="endRoundBtn">End round</button>
+  </div>
+</div>
+
+<script>
+/* ==================================================================
+   SUPABASE CONFIG
+   👉 These are your project's values (Project Settings → API).
+   The publishable key is safe to ship in client code — data access
+   is controlled by Row Level Security policies on the table.
+   ================================================================== */
+const SUPABASE_URL = "https://zciulgqkqusjxomyapcz.supabase.co";
+const SUPABASE_KEY = "sb_publishable_t3LKmsyqW22dT4ZMlKWQkg_UIyTziIe";
+const TABLE = "arcade_sessions"; // existing table in this project
+
+const sb = SUPABASE_URL.startsWith("http")
+  ? supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+  : null;
+
+/* ==================================================================
+   SMALL HELPERS + PERSISTENCE
+   ================================================================== */
+const $ = (id) => document.getElementById(id);
+const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+const pick = (arr) => arr[randInt(0, arr.length - 1)];
+const shuffle = (arr) => { const a = [...arr]; for (let i = a.length - 1; i > 0; i--) { const j = randInt(0, i); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const todayKey = () => new Date().toISOString().slice(0, 10);
+const store = {
+  get(k, fb) { try { const v = localStorage.getItem(k); return v === null ? fb : JSON.parse(v); } catch { return fb; } },
+  set(k, v) { localStorage.setItem(k, JSON.stringify(v)); },
+};
+function announce(msg) { $("liveRegion").textContent = msg; }
+
+// Stable anonymous device id so your sessions group together in the DB.
+let deviceId = store.get("mfa-device-id", null);
+if (!deviceId) { deviceId = crypto.randomUUID(); store.set("mfa-device-id", deviceId); }

@@ -1,0 +1,36 @@
+name: Assemble index.html from parts
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to assemble on'
+        required: false
+        default: 'claude/offline-multiplayer-games-c9s802'
+
+permissions:
+  contents: write
+
+jobs:
+  assemble:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch || 'claude/offline-multiplayer-games-c9s802' }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Assemble parts into index.html
+        run: |
+          cat index.html.part1 index.html.part2 index.html.part3 index.html.part4 index.html.part5 > index.html
+          rm index.html.part1 index.html.part2 index.html.part3 index.html.part4 index.html.part5
+
+      - name: Commit assembled file
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git rm --cached index.html.part1 index.html.part2 index.html.part3 index.html.part4 index.html.part5 2>/dev/null || true
+          git commit -m "Assemble: add themes, sprint levels, load-more collapse, sprint-only Supabase save"
+          git push

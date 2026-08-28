@@ -1,0 +1,801 @@
+  daily = { current: null };
+  $("dailyInput").value = "";
+  dailyNext();
+  setTimeout(() => $("dailyInput").focus(), 80);
+}
+function dailyNext() {
+  if (round.solved >= DAILY_GOAL) return endRound();
+  daily.current = genDailyProblem();
+  round.qStart = performance.now();
+  $("dailyExpr").innerHTML = exprHTML(daily.current.parts);
+  $("dailyExpr").setAttribute("aria-label", exprSpoken(daily.current.parts));
+  $("dailyQLabel").textContent = `Problem ${round.solved + 1} of ${DAILY_GOAL}`;
+  $("dailyQBar").style.width = (round.solved / DAILY_GOAL) * 100 + "%";
+  $("dailyInput").value = "";
+}
+$("dailyInput").addEventListener("input", (e) => {
+  if (round.ended || round.game !== "daily") return;
+  const input = e.target;
+  input.value = input.value.replace(/[^0-9]/g, "");
+  if (input.value === "") return;
+  const typed = parseInt(input.value, 10);
+  const answer = daily.current.answer;
+  if (typed === answer) {
+    registerCorrect(1);
+    announce("Correct");
+    dailyNext();
+  } else if (input.value.length >= String(answer).length) {
+    registerWrong();
+    input.classList.add("shake");
+    setTimeout(() => input.classList.remove("shake"), 320);
+    input.value = "";
+  }
+});
+
+/* ==================================================================
+   END OF ROUND → RESULTS + SAVE
+   ================================================================== */
+let lastGame = "sprint";
+function endRound(quiet) {
+  if (round.ended) return;
+  round.ended = true;
+  if (round.interval && round.interval !== "paused") clearInterval(round.interval);
+  clearTimeout(react.timeout);
+  $("pauseOverlay").classList.remove("show");
+  lastGame = round.game;
+  const g = GAMES[round.game];
+
+  // Headline score per game: sprint uses points, reaction uses best ms, others use count.
+  const isReaction = round.game === "reaction";
+  const bestMs = isReaction && react.times.length ? Math.min(...react.times) : null;
+  const headline = round.game === "sprint" ? round.score : isReaction ? bestMs : round.solved;
+
+  const accuracy = round.attempts > 0 ? Math.round((round.solved / round.attempts) * 100) : 0;
+  const avg = round.times.length ? round.times.reduce((a, b) => a + b, 0) / round.times.length : null;
+  const fastest = round.times.length ? Math.min(...round.times) : null;
+  const duration = Math.round((performance.now() - round.startedAt) / 1000);
+
+  // Local records — sprint tracks best per level; other games use global key
+  let newBest = false;
+  if (headline !== null) {
+    if (round.game === "sprint" && round.level) {
+      const lvKey = `mfa-best:sprint:L${round.level}`;
+      const prev = store.get(lvKey, null);
+      newBest = prev === null || headline > prev;
+      if (newBest) store.set(lvKey, headline);
+    } else {
+      newBest = isNewBest(round.game, headline);
+      if (newBest) store.set("mfa-best:" + round.game, headline);
+    }
+  }
+  bumpTotals(round.game === "sprint" ? round.score : round.solved * 10);
+  bumpDayStreak();
+  if (round.game === "daily") updateDaily(round.solved);
+
+  // Results UI
+  $("resultsIcon").textContent = g.icon;
+  $("resultsIcon").style.background = g.bg;
+  $("resultsTitle").textContent = round.game === "daily" && round.solved >= DAILY_GOAL ? "Challenge complete! ⭐" : g.name;
+  $("resultsSub").textContent = round.game === "sprint"
+    ? `Level ${round.level} · ${SPRINT_LEVEL_DESCS[round.level] || ""}`
+    : round.game === "daily"
+    ? `${round.solved} / ${DAILY_GOAL} problems in ${DAILY_TIME}s`
+    : g.sub;
+  $("bestBadge").classList.toggle("show", newBest && (headline ?? 0) !== 0);
+  $("resScore").textContent = headline === null ? "—" : isReaction ? (bestMs / 1000).toFixed(2) + "s" : headline.toLocaleString();
+  $("resScoreLabel").textContent = round.game === "sprint" ? "SCORE" : isReaction ? "FASTEST TAP" : round.game === "memory" ? "PAIRS" : round.game === "scramble" ? "WORDS" : "SOLVED";
+
+  const cards = isReaction
+    ? [
+        ["Rounds", react.times.length + "/" + REACT_ROUNDS],
+        ["Average", avg !== null ? Math.round(avg * 1000) + "ms" : "—"],
+        ["Fastest", bestMs !== null ? bestMs + "ms" : "—"],
+        ["False starts", round.attempts - round.solved],
+      ]
+    : [
+        ["Solved", round.solved],
+        ["Accuracy", accuracy + "%"],
+        ["Avg / answer", avg !== null ? avg.toFixed(1) + "s" : "—"],
+        ["Max streak", "x" + round.maxStreak],
+      ];
+  $("resStatGrid").innerHTML = cards.map(([l, v]) => `<div class="stat-card"><b>${v}</b><small>${l}</small></div>`).join("");
+
+  showScreen("screen-results");
+  if (quiet && round.solved === 0 && round.attempts === 0) { showTab("home"); return; }
+  if (round.game === "sprint") {
+    saveSession({
+      device_id: deviceId,
+      game_id: "sprint",
+      mode: "standard",
+      difficulty: `level-${round.level}`,
+      level: round.level,
+      time_limit: SPRINT_TIME,
+      score: round.score,
+      solved: round.solved,
+      attempts: round.attempts,
+      accuracy_pct: accuracy,
+      avg_time_secs: avg !== null ? Number(avg.toFixed(2)) : null,
+      fastest_time_secs: fastest !== null ? Number(fastest.toFixed(3)) : null,
+      max_streak: round.maxStreak,
+      duration_secs: duration,
+      metadata: { name: store.get("mfa-name", "Player"), level: round.level },
+    });
+  } else {
+    $("saveStatus").className = "save-status";
+    $("saveStatus").textContent = "";
+  }
+}
+
+async function saveSession(row) {
+  const status = $("saveStatus");
+  status.className = "save-status";
+  if (!sb) {
+    status.classList.add("err");
+    status.textContent = "Not saved — add your Supabase URL and key at the top of the file.";
+    return;
+  }
+  status.textContent = "Saving session…";
+  try {
+    const { error } = await sb.from(TABLE).insert(row);
+    if (error) throw error;
+    status.classList.add("ok");
+    status.textContent = "✓ Session saved";
+    stats.cache = null; // refresh stats next time
+  } catch (err) {
+    console.error("Supabase save failed:", err);
+    status.classList.add("err");
+    status.textContent = "Couldn't save this session — check your connection.";
+  }
+}
+
+$("againBtn").addEventListener("click", () => startGame(lastGame));
+$("homeBtn").addEventListener("click", () => showTab("home"));
+
+/* ==================================================================
+   STATS TAB (Supabase history + Chart.js)
+   ================================================================== */
+const stats = { cache: null, chart: null, metric: "score", filter: "all" };
+
+function buildStatChips() {
+  const row = $("statChips");
+  row.innerHTML = "";
+  const entries = [["all", "All"], ["sprint", "Math Sprint"]];
+  for (const [key, label] of entries) {
+    const chip = document.createElement("button");
+    chip.className = "chip";
+    chip.textContent = label;
+    chip.setAttribute("aria-pressed", key === stats.filter ? "true" : "false");
+    chip.addEventListener("click", () => {
+      stats.filter = key;
+      row.querySelectorAll(".chip").forEach((c) => c.setAttribute("aria-pressed", c === chip ? "true" : "false"));
+      renderChart();
+    });
+    row.appendChild(chip);
+  }
+}
+buildStatChips();
+
+document.querySelectorAll(".metric-btn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".metric-btn").forEach((b) => b.setAttribute("aria-pressed", b === btn ? "true" : "false"));
+    stats.metric = btn.dataset.metric;
+    renderChart();
+  });
+});
+
+async function openStats() {
+  const empty = $("chartEmpty");
+  if (!sb) {
+    empty.style.display = "flex";
+    empty.textContent = "Connect Supabase to track your progress over time.";
+    return;
+  }
+  if (!stats.cache) {
+    empty.style.display = "flex";
+    empty.textContent = "Loading…";
+    try {
+      const { data, error } = await sb
+        .from(TABLE)
+        .select("created_at,game_id,score,solved,accuracy_pct")
+        .eq("device_id", deviceId)
+        .order("created_at", { ascending: true })
+        .limit(400);
+      if (error) throw error;
+      stats.cache = data || [];
+    } catch (err) {
+      console.error("Supabase fetch failed:", err);
+      empty.textContent = "Couldn't load your sessions — check your connection.";
+      return;
+    }
+  }
+  renderChart();
+}
+
+function filteredSessions() {
+  let rows = stats.cache || [];
+  if (stats.filter !== "all") rows = rows.filter((r) => r.game_id === stats.filter);
+  // Reaction stores milliseconds as score, which would distort the mixed chart.
+  if (stats.filter === "all" && stats.metric === "score") rows = rows.filter((r) => r.game_id !== "reaction");
+  return rows;
+}
+
+function renderChart() {
+  const rows = filteredSessions();
+  const empty = $("chartEmpty");
+  if (!rows.length) {
+    if (stats.chart) { stats.chart.destroy(); stats.chart = null; }
+    empty.style.display = "flex";
+    empty.textContent = "No sessions here yet. Play a round and it will show up!";
+    $("sBest").textContent = $("sAvg").textContent = "—";
+    $("sCount").textContent = "0";
+    return;
+  }
+  empty.style.display = "none";
+
+  const css = getComputedStyle(document.documentElement);
+  const accent = css.getPropertyValue("--accent").trim();
+  const soft = css.getPropertyValue("--text-soft").trim();
+  const grid = css.getPropertyValue("--border").trim();
+  const isAcc = stats.metric === "accuracy";
+  const isReact = stats.filter === "reaction" && !isAcc;
+
+  const labels = rows.map((r) => new Date(r.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric" }));
+  const values = rows.map((r) => (isAcc ? r.accuracy_pct : isReact ? r.score / 1000 : r.score));
+
+  if (stats.chart) stats.chart.destroy();
+  stats.chart = new Chart($("progressChart"), {
+    type: "line",
+    data: {
+      labels,
+      datasets: [{
+        label: isAcc ? "Accuracy %" : isReact ? "Fastest tap (s)" : "Score",
+        data: values,
+        borderColor: accent,
+        backgroundColor: accent + "22",
+        pointBackgroundColor: accent,
+        pointRadius: 3,
+        borderWidth: 2.5,
+        tension: 0.35,
+        fill: true,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: soft, maxTicksLimit: 6 }, grid: { display: false } },
+        y: { beginAtZero: !isReact, max: isAcc ? 100 : undefined, ticks: { color: soft }, grid: { color: grid } },
+      },
+    },
+  });
+
+  // Summary numbers for the filtered set.
+  const nums = values;
+  const best = isReact ? Math.min(...nums) : Math.max(...nums);
+  const avg = nums.reduce((a, b) => a + b, 0) / nums.length;
+  const fmt = (v) => (isReact ? v.toFixed(2) + "s" : Math.round(v).toLocaleString());
+  $("sBest").textContent = fmt(best);
+  $("sAvg").textContent = fmt(avg);
+  $("sCount").textContent = rows.length;
+}
+
+/* ==================================================================
+   PWA — install banner + service worker
+   ================================================================== */
+let deferredPrompt = null;
+const isStandalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+
+function maybeShowInstall() {
+  if (isStandalone || store.get("mfa-install-dismissed", false)) return;
+  if (deferredPrompt) {
+    $("installBanner").classList.add("show");
+    $("installRow").style.display = "flex";
+  } else if (isIOS) {
+    $("installBanner").classList.add("show");
+    $("installHint").textContent = "Tap Share, then "Add to Home Screen".";
+    $("installBtn").style.display = "none";
+  }
+}
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  maybeShowInstall();
+});
+async function doInstall() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  $("installBanner").classList.remove("show");
+  $("installRow").style.display = "none";
+}
+$("installBtn").addEventListener("click", doInstall);
+$("installBtn2").addEventListener("click", doInstall);
+$("installX").addEventListener("click", () => {
+  store.set("mfa-install-dismissed", true);
+  $("installBanner").classList.remove("show");
+});
+window.addEventListener("appinstalled", () => {
+  $("installBanner").classList.remove("show");
+  $("installRow").style.display = "none";
+});
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js").catch(() => {/* offline support is optional */});
+}
+
+/* ==================================================================
+   MULTIPLAYER — REGISTRY + SHARED STATE
+   ================================================================== */
+const PLAYER_COLORS = ["#A78BFA", "#34D399", "#F59E0B", "#F87171"];
+const PLAYER_INITIALS_BG = ["#7C3AED", "#059669", "#D97706", "#DC2626"];
+
+const MP_GAMES = {
+  "f2f-duel":     { name: "Math Duel",         sub: "Answer first — first to 10 wins!", icon: "⚔️",  minP: 2, maxP: 2, type: "f2f",  tag: "Face-to-Face" },
+  "f2f-reaction": { name: "Reaction Race",      sub: "Tap your side when it flashes!",   icon: "🎯",  minP: 2, maxP: 2, type: "f2f",  tag: "Face-to-Face" },
+  "f2f-truefalse":{ name: "True/False Clash",   sub: "Is the equation true or false?",   icon: "✅",  minP: 2, maxP: 2, type: "f2f",  tag: "Face-to-Face" },
+  "f2f-tug":      { name: "Number Tug-of-War",  sub: "Correct answers pull the rope!",   icon: "🔢",  minP: 2, maxP: 2, type: "f2f",  tag: "Face-to-Face" },
+  "mp-tournament":{ name: "Math Tournament",    sub: "Best score in 60s wins!",          icon: "🏆",  minP: 2, maxP: 4, type: "pass", tag: "2–4 Players" },
+  "mp-potato":    { name: "Hot Potato Math",    sub: "Answer before time runs out!",     icon: "🥔",  minP: 2, maxP: 4, type: "pass", tag: "2–4 Players" },
+  "mp-blitz":     { name: "Lightning Blitz",    sub: "30-second burst — highest wins!",  icon: "⚡",  minP: 2, maxP: 4, type: "pass", tag: "2–4 Players" },
+  "mp-war":       { name: "Number War",         sub: "Solve to claim the higher card!",  icon: "🃏",  minP: 2, maxP: 4, type: "pass", tag: "2–4 Players" },
+  "mp-memory":    { name: "Memory Masters",     sub: "Take turns, most pairs wins!",     icon: "🧠",  minP: 2, maxP: 4, type: "pass", tag: "2–4 Players" },
+  "mp-dice":      { name: "Dice Dash",          sub: "Roll dice, do the math, score!",   icon: "🎲",  minP: 2, maxP: 4, type: "pass", tag: "2–4 Players" },
+  "mp-survivor":  { name: "Survivor Math",      sub: "Wrong answer = eliminated!",       icon: "🔥",  minP: 2, maxP: 4, type: "pass", tag: "2–4 Players" },
+  "mp-speedquiz": { name: "Speed Quiz Battle",  sub: "Buzz in first, answer correctly!", icon: "🎯",  minP: 2, maxP: 4, type: "pass", tag: "2–4 Players" },
+};
+
+let mp = {
+  game: null, players: [], currentIdx: 0,
+  scores: [], lives: [], eliminated: [],
+  roundNum: 0, lastGame: null,
+};
+
+/* Home — render multiplayer section */
+function makeMpRow(key, g) {
+  const row = document.createElement("button");
+  row.className = "mp-mode-row";
+  const playerRange = g.minP === g.maxP ? `${g.minP} players` : `${g.minP}–${g.maxP} players`;
+  row.innerHTML = `
+    <div class="mode-icon" style="background:rgba(167,139,250,0.15)">${g.icon}</div>
+    <div class="mode-info">
+      <div class="mode-name">${g.name}</div>
+      <div class="mode-sub">${g.sub}</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;margin-right:4px;">
+      <span class="mp-player-tag">${g.tag}</span>
+      <span style="font-size:11px;color:var(--text-soft);">${playerRange}</span>
+    </div>
+    <span class="mp-play-btn" aria-hidden="true"></span>`;
+  row.setAttribute("aria-label", `Play ${g.name}. ${g.sub}`);
+  row.addEventListener("click", () => openMpSetup(key));
+  return row;
+}
+
+function renderMpModeList() {
+  const list = $("mpModeList");
+  list.innerHTML = "";
+  const entries = Object.entries(MP_GAMES);
+  const expWrap = document.createElement("div");
+  expWrap.className = "expand-section" + (mpExpanded ? " open" : "");
+  expWrap.id = "mpExpandWrap";
+  for (const [key, g] of entries) expWrap.appendChild(makeMpRow(key, g));
+  list.appendChild(expWrap);
+  const moreBtn = document.createElement("button");
+  moreBtn.className = "load-more-btn";
+  moreBtn.textContent = mpExpanded ? "▲ Hide multiplayer games" : "▾ Load multiplayer games (" + entries.length + ")";
+  moreBtn.addEventListener("click", () => { mpExpanded = !mpExpanded; renderMpModeList(); });
+  list.appendChild(moreBtn);
+}
+
+/* ==================================================================
+   PLAYER SETUP OVERLAY
+   ================================================================== */
+let setupPendingGame = null;
+let setupPlayerCount = 2;
+
+function openMpSetup(gameKey) {
+  const g = MP_GAMES[gameKey];
+  setupPendingGame = gameKey;
+  setupPlayerCount = g.minP;
+  $("setupGameTitle").textContent = g.icon + " " + g.name;
+  $("setupGameSub").textContent = g.type === "f2f"
+    ? "Place your device on a table between two players"
+    : "Each player takes a turn — pass the device when prompted";
+
+  // Build count buttons
+  const countRow = $("playerCountRow");
+  countRow.innerHTML = "";
+  for (let n = g.minP; n <= g.maxP; n++) {
+    const btn = document.createElement("button");
+    btn.className = "pcount-btn" + (n === g.minP ? " active" : "");
+    btn.textContent = n + " " + (n === 1 ? "player" : "players");
+    btn.dataset.count = n;
+    btn.addEventListener("click", () => {
+      setupPlayerCount = n;
+      countRow.querySelectorAll(".pcount-btn").forEach(b => b.classList.toggle("active", b === btn));
+      buildNameFields(n);
+    });
+    countRow.appendChild(btn);
+  }
+  buildNameFields(g.minP);
+  $("setupOverlay").classList.add("show");
+}
+
+function buildNameFields(n) {
+  const wrap = $("playerNameFields");
+  const existing = [...wrap.querySelectorAll(".player-name-input")].map(i => i.value);
+  wrap.innerHTML = "";
+  const defaults = ["Player 1","Player 2","Player 3","Player 4"];
+  for (let i = 0; i < n; i++) {
+    const row = document.createElement("div");
+    row.className = "player-name-wrap";
+    row.innerHTML = `
+      <div class="player-color-dot" style="background:${PLAYER_COLORS[i]}"></div>
+      <input class="player-name-input" type="text" maxlength="14"
+        placeholder="${defaults[i]}" value="${existing[i] || defaults[i]}" aria-label="Player ${i+1} name" />`;
+    wrap.appendChild(row);
+  }
+}
+
+$("setupCancelBtn").addEventListener("click", () => $("setupOverlay").classList.remove("show"));
+$("setupStartBtn").addEventListener("click", () => {
+  const names = [...$("playerNameFields").querySelectorAll(".player-name-input")]
+    .map(i => i.value.trim() || i.placeholder);
+  mp.players = names;
+  mp.scores = names.map(() => 0);
+  mp.lives = names.map(() => 3);
+  mp.eliminated = names.map(() => false);
+  mp.currentIdx = 0;
+  mp.roundNum = 0;
+  mp.lastGame = setupPendingGame;
+  $("setupOverlay").classList.remove("show");
+  launchMpGame(setupPendingGame);
+});
+
+function launchMpGame(key) {
+  document.body.classList.add("in-game");
+  const g = MP_GAMES[key];
+  if (key === "f2f-duel") startF2FDuel();
+  else if (key === "f2f-reaction") startF2FReaction();
+  else if (key === "f2f-truefalse") startF2FTrueFalse();
+  else if (key === "f2f-tug") startF2FTug();
+  else if (key === "mp-tournament") startMpTournament();
+  else if (key === "mp-potato") startMpPotato();
+  else if (key === "mp-blitz") startMpBlitz();
+  else if (key === "mp-war") startMpWar();
+  else if (key === "mp-memory") startMpMemory();
+  else if (key === "mp-dice") startMpDice();
+  else if (key === "mp-survivor") startMpSurvivor();
+  else if (key === "mp-speedquiz") startMpSpeedQuiz();
+}
+
+function showF2FScreen(id) {
+  document.querySelectorAll(".screen,.f2f-screen").forEach(s => {
+    s.classList.remove("active");
+    if (s.classList.contains("f2f-screen")) s.style.display = "none";
+  });
+  const el = $(id);
+  if (el.classList.contains("f2f-screen")) {
+    el.style.display = "flex";
+    el.classList.add("active");
+  } else {
+    el.classList.add("active");
+  }
+}
+
+/* Pass-screen helper */
+function showPassScreen(playerIdx, onTap) {
+  const name = mp.players[playerIdx];
+  const color = PLAYER_INITIALS_BG[playerIdx];
+  $("passAvatar").textContent = (name[0] || "?").toUpperCase();
+  $("passAvatar").style.background = color;
+  $("passName").textContent = name + "'s Turn";
+  $("passSub").textContent = "Hand the device to " + name;
+  showScreen("screen-mp-pass");
+  const btn = $("passTapBtn");
+  const handler = () => { btn.removeEventListener("click", handler); onTap(); };
+  btn.addEventListener("click", handler);
+}
+
+/* Multiplayer results */
+function showMpResults(title, sub, icon) {
+  clearMpTimers();
+  document.querySelectorAll(".f2f-screen").forEach(s => { s.classList.remove("active"); s.style.display = "none"; });
+  document.body.classList.remove("in-game");
+  showScreen("screen-mp-results");
+  $("mpResTitle").textContent = title || "Game Over!";
+  $("mpResSub").textContent = sub || "Here's how everyone did";
+  $("mpResIcon").textContent = icon || "🏆";
+
+  const sorted = mp.players
+    .map((name, i) => ({ name, score: mp.scores[i], color: PLAYER_INITIALS_BG[i] }))
+    .sort((a, b) => b.score - a.score);
+
+  const ranks = ["🥇", "🥈", "🥉", "4️⃣"];
+  $("mpPodium").innerHTML = sorted.map((p, i) => `
+    <div class="mp-podium-row${i === 0 ? " first" : ""}">
+      <div class="mp-podium-rank">${ranks[i] || (i+1)+"."}</div>
+      <div class="mp-podium-avatar" style="background:${p.color}">${p.name[0].toUpperCase()}</div>
+      <div class="mp-podium-name">${p.name}</div>
+      <div class="mp-podium-score" style="color:${p.color}">${p.score}</div>
+    </div>`).join("");
+
+  bumpTotals(mp.scores[0] || 0);
+  bumpDayStreak();
+}
+
+$("mpPlayAgainBtn").addEventListener("click", () => {
+  mp.scores = mp.players.map(() => 0);
+  mp.lives = mp.players.map(() => 3);
+  mp.eliminated = mp.players.map(() => false);
+  mp.currentIdx = 0;
+  mp.roundNum = 0;
+  document.body.classList.add("in-game");
+  launchMpGame(mp.lastGame);
+});
+$("mpHomeBtn").addEventListener("click", () => showTab("home"));
+
+/* Back/quit for f2f screens */
+function quitMpGame() {
+  document.querySelectorAll(".f2f-screen").forEach(s => { s.classList.remove("active"); s.style.display = "none"; });
+  clearMpTimers();
+  showTab("home");
+}
+
+let mpTimers = [];
+function mpTimeout(fn, ms) { const t = setTimeout(fn, ms); mpTimers.push(t); return t; }
+function mpInterval(fn, ms) { const t = setInterval(fn, ms); mpTimers.push(t); return t; }
+function clearMpTimers() { mpTimers.forEach(t => { clearTimeout(t); clearInterval(t); }); mpTimers = []; }
+
+/* Player HUD for pass-and-play */
+function renderPlayerHud(containerEl, currentIdx) {
+  containerEl.innerHTML = `
+    <div class="player-hud-dot" style="background:${PLAYER_COLORS[currentIdx]}"></div>
+    <div class="player-hud-name">${mp.players[currentIdx]}</div>
+    <div class="player-hud-scores">
+      ${mp.players.map((n, i) => `
+        <div class="player-hud-chip${i === currentIdx ? " active" : ""}">
+          <span style="color:${PLAYER_COLORS[i]}">${n[0]}</span> ${mp.scores[i]}
+        </div>`).join("")}
+    </div>`;
+}
+
+/* ==================================================================
+   F2F 1 — MATH DUEL
+   ================================================================== */
+let duel = {};
+const DUEL_WIN = 10;
+
+function startF2FDuel() {
+  duel = { locked: false, scores: [0, 0], current: null };
+  const [p1, p2] = mp.players;
+  $("duelNameTop").textContent = p1;
+  $("duelNameBottom").textContent = p2;
+  $("duelCSName1").textContent = p1.slice(0,6);
+  $("duelCSName2").textContent = p2.slice(0,6);
+  updateDuelScores();
+  showF2FScreen("screen-f2f-duel");
+  duelNext();
+}
+
+function updateDuelScores() {
+  $("duelScoreNumTop").textContent = duel.scores[0];
+  $("duelScoreNumBottom").textContent = duel.scores[1];
+  $("duelCSScore1").textContent = duel.scores[0];
+  $("duelCSScore2").textContent = duel.scores[1];
+}
+
+function duelNext() {
+  duel.current = genMpProblem(duel.scores[0] + duel.scores[1]);
+  duel.locked = false;
+  const expr = exprHTML(duel.current.parts);
+  $("duelQuestion").innerHTML = expr;
+
+  const options = shuffle([duel.current.answer, ...makeDistractors(duel.current.answer)]);
+
+  function makeButtons(containerId, playerIdx) {
+    const wrap = $(containerId);
+    wrap.innerHTML = "";
+    for (const opt of options) {
+      const btn = document.createElement("button");
+      btn.className = "f2f-answer-btn";
+      btn.textContent = opt;
+      btn.addEventListener("click", () => duelAnswer(btn, opt, playerIdx, wrap));
+      wrap.appendChild(btn);
+    }
+  }
+  makeButtons("duelAnswersTop", 0);
+  makeButtons("duelAnswersBottom", 1);
+}
+
+function duelAnswer(btn, value, playerIdx, wrap) {
+  if (duel.locked) return;
+  duel.locked = true;
+  if (value === duel.current.answer) {
+    btn.classList.add("correct");
+    duel.scores[playerIdx]++;
+    mp.scores[playerIdx] = duel.scores[playerIdx];
+    updateDuelScores();
+    announce(`${mp.players[playerIdx]} got it!`);
+    if (duel.scores[playerIdx] >= DUEL_WIN) {
+      mpTimeout(() => showMpResults(`${mp.players[playerIdx]} Wins! 🎉`, `First to ${DUEL_WIN} — great duel!`, "⚔️"), 600);
+      return;
+    }
+  } else {
+    btn.classList.add("wrong");
+    wrap.querySelectorAll(".f2f-answer-btn").forEach(b => {
+      if (+b.textContent === duel.current.answer) b.classList.add("correct");
+    });
+  }
+  mpTimeout(() => { if (!duel.locked || true) duelNext(); }, 600);
+}
+
+/* Back button */
+const duelBack = document.createElement("button");
+duelBack.className = "gh-back";
+duelBack.textContent = "←";
+duelBack.style.cssText = "position:absolute;top:10px;right:10px;z-index:10;width:40px;height:40px;border-radius:12px;background:var(--card);border:1px solid var(--border);font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;";
+duelBack.addEventListener("click", quitMpGame);
+$("screen-f2f-duel").appendChild(duelBack);
+
+/* ==================================================================
+   F2F 2 — REACTION RACE
+   ================================================================== */
+let rr = {};
+const RR_ROUNDS = 7;
+
+function startF2FReaction() {
+  rr = { wins: [0,0], round: 0, phase: "idle", goTimeout: null, winnerIdx: null };
+  const [p1, p2] = mp.players;
+  $("rrNameTop").textContent = p1;
+  $("rrNameBottom").textContent = p2;
+  updateRRDisplay();
+  showF2FScreen("screen-f2f-reaction");
+  rrSetPhase("idle");
+}
+
+function updateRRDisplay() {
+  $("rrWinsTop").textContent = rr.wins[0];
+  $("rrWinsBottom").textContent = rr.wins[1];
+  $("rrCSRound").textContent = `Round ${Math.min(rr.round + 1, RR_ROUNDS)} / ${RR_ROUNDS}`;
+}
+
+function rrSetPhase(phase, msg) {
+  rr.phase = phase;
+  const zones = [$("rrZoneTop"), $("rrZoneBottom")];
+  const labels = [$("rrLabelTop"), $("rrLabelBottom")];
+
+  if (phase === "idle") {
+    zones.forEach((z, i) => {
+      z.className = "f2f-tap-zone ready";
+      labels[i].textContent = rr.round === 0 ? "Tap to start!" : "Tap for next";
+    });
+    $("rrCSStatus").textContent = "Get Ready";
+    $("rrCSStatus").style.color = "var(--accent)";
+  } else if (phase === "waiting") {
+    zones.forEach(z => z.className = "f2f-tap-zone ready");
+    labels.forEach(l => l.textContent = "Wait…");
+    $("rrCSStatus").textContent = "Wait for it…";
+    $("rrCSStatus").style.color = "var(--text-soft)";
+    rr.goTimeout = mpTimeout(() => {
+      rr.goAt = performance.now();
+      rrSetPhase("go");
+    }, randInt(1200, 3800));
+  } else if (phase === "go") {
+    zones.forEach(z => z.className = "f2f-tap-zone go-flash");
+    labels.forEach(l => l.textContent = "TAP NOW!");
+    $("rrCSStatus").textContent = "GO!";
+    $("rrCSStatus").style.color = "var(--lime)";
+  } else if (phase === "result") {
+    const w = rr.winnerIdx;
+    zones.forEach((z, i) => {
+      z.className = "f2f-tap-zone " + (i === w ? "scored" : "too-slow");
+      labels[i].textContent = i === w ? "🎉 Point!" : "Too slow!";
+    });
+    $("rrCSStatus").textContent = msg || "";
+    mpTimeout(() => {
+      if (rr.round >= RR_ROUNDS) {
+        const winner = rr.wins[0] > rr.wins[1] ? 0 : rr.wins[1] > rr.wins[0] ? 1 : -1;
+        mp.scores = [...rr.wins];
+        const title = winner === -1 ? "It's a Tie! 🤝" : `${mp.players[winner]} Wins! 🎉`;
+        showMpResults(title, `Final: ${rr.wins[0]} – ${rr.wins[1]}`, "🎯");
+      } else {
+        rrSetPhase("idle");
+        updateRRDisplay();
+      }
+    }, 1200);
+  } else if (phase === "early") {
+    zones.forEach((z,i) => {
+      z.className = "f2f-tap-zone " + (i === rr.earlyIdx ? "too-slow" : "ready");
+      labels[i].textContent = i === rr.earlyIdx ? "Too early! ⚠️" : "Wait…";
+    });
+    $("rrCSStatus").textContent = "False start!";
+    mpTimeout(() => rrSetPhase("idle"), 1200);
+  }
+}
+
+[$("rrZoneTop"), $("rrZoneBottom")].forEach((zone, playerIdx) => {
+  zone.addEventListener("pointerdown", () => {
+    if (rr.phase === "idle") {
+      rr.round++;
+      rrSetPhase("waiting");
+    } else if (rr.phase === "waiting") {
+      clearTimeout(rr.goTimeout);
+      rr.earlyIdx = playerIdx;
+      rrSetPhase("early");
+    } else if (rr.phase === "go") {
+      const ms = Math.round(performance.now() - rr.goAt);
+      rr.wins[playerIdx]++;
+      mp.scores = [...rr.wins];
+      rr.winnerIdx = playerIdx;
+      rr.phase = "result"; // prevent double-tap
+      rrSetPhase("result", `${mp.players[playerIdx]} wins in ${ms}ms!`);
+    }
+  });
+});
+
+const rrBack = document.createElement("button");
+rrBack.style.cssText = "position:absolute;top:10px;right:10px;z-index:10;width:40px;height:40px;border-radius:12px;background:var(--card);border:1px solid var(--border);font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text);";
+rrBack.textContent = "←";
+rrBack.addEventListener("click", quitMpGame);
+$("screen-f2f-reaction").appendChild(rrBack);
+
+/* ==================================================================
+   F2F 3 — TRUE / FALSE CLASH
+   ================================================================== */
+let tf = {};
+const TF_ROUNDS = 10;
+
+function genTFStatement() {
+  const prob = twoOp(pick(["add","sub","mul","div"]), 2, 12);
+  const correct = prob.answer;
+  const isTrue = Math.random() < 0.5;
+  const displayed = isTrue ? correct : correct + pick([1,-1,2,-2,3,-3]) * randInt(1,3);
+  return { parts: prob.parts, displayed, isTrue };
+}
+
+function startF2FTrueFalse() {
+  tf = { scores: [0, 0], round: 0, locked: false, current: null };
+  const [p1, p2] = mp.players;
+  $("tfNameTop").textContent = p1;
+  $("tfNameBottom").textContent = p2;
+  showF2FScreen("screen-f2f-truefalse");
+  tfNext();
+}
+
+function tfNext() {
+  if (tf.round >= TF_ROUNDS) {
+    mp.scores = [...tf.scores];
+    const winner = tf.scores[0] > tf.scores[1] ? 0 : tf.scores[1] > tf.scores[0] ? 1 : -1;
+    const title = winner === -1 ? "It's a Tie! 🤝" : `${mp.players[winner]} Wins! 🎉`;
+    return showMpResults(title, `Final: ${tf.scores[0]} – ${tf.scores[1]}`, "✅");
+  }
+  tf.current = genTFStatement();
+  tf.locked = false;
+  const exprStr = exprHTML(tf.current.parts) + ` <span class="op">=</span> ${tf.current.displayed}`;
+  $("tfStatement").innerHTML = exprStr;
+  $("tfRoundInfo").textContent = `Round ${tf.round + 1} / ${TF_ROUNDS}`;
+  $("tfScoreNumTop").textContent = tf.scores[0];
+  $("tfScoreNumBottom").textContent = tf.scores[1];
+  ["tfTrueTop","tfFalseTop","tfTrueBottom","tfFalseBottom"].forEach(id => {
+    $(id).className = $(id).className.replace(/\s*flash-\w+/g,"");
+    $(id).disabled = false;
+  });
+}
+
+function tfAnswer(playerIdx, answered) {
+  if (tf.locked) return;
+  tf.locked = true;
+  const correct = answered === tf.current.isTrue;
+  if (correct) {
+    tf.scores[playerIdx]++;
+    mp.scores[playerIdx] = tf.scores[playerIdx];
+    announce(`${mp.players[playerIdx]} correct!`);
+  }
+  // Flash buttons
+  const suffix = playerIdx === 0 ? "Top" : "Bottom";
+  const trueId = "tfTrue" + suffix, falseId = "tfFalse" + suffix;
+  if (tf.current.isTrue) {
+    $(trueId).classList.add("flash-correct");
