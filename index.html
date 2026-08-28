@@ -66,6 +66,50 @@
   --on-accent: #FFFFFF;
 }
 
+[data-theme="ocean"] {
+  --bg: #050D1F; --card: #0A1628; --card2: #0D1C35;
+  --border: #152340; --text: #E8F4FD; --text-soft: #7AA8C9;
+  --accent: #38BDF8; --accent-dim: #0EA5E9;
+  --accent-soft: rgba(56,189,248,0.12); --accent-glow: rgba(56,189,248,0.30);
+  --lime: #67E8F9; --gold: #FCD34D; --red: #FB7185;
+  --red-soft: rgba(251,113,133,0.14); --green: #34D399;
+  --green-soft: rgba(52,211,153,0.14); --track: #0F2040;
+  --shadow: 0 10px 34px rgba(0,0,0,0.6); --on-accent: #020D1A;
+}
+
+[data-theme="sunset"] {
+  --bg: #150A04; --card: #1E1008; --card2: #281508;
+  --border: #3D200A; --text: #FDF4EE; --text-soft: #BF8D68;
+  --accent: #FB923C; --accent-dim: #F97316;
+  --accent-soft: rgba(251,146,60,0.12); --accent-glow: rgba(251,146,60,0.30);
+  --lime: #FDE68A; --gold: #FBBF24; --red: #F87171;
+  --red-soft: rgba(248,113,113,0.14); --green: #6EE7B7;
+  --green-soft: rgba(110,231,183,0.14); --track: #2C1206;
+  --shadow: 0 10px 34px rgba(0,0,0,0.5); --on-accent: #1A0800;
+}
+
+[data-theme="forest"] {
+  --bg: #071209; --card: #0C1E0F; --card2: #102614;
+  --border: #1A3D20; --text: #EDFAF0; --text-soft: #78A882;
+  --accent: #4ADE80; --accent-dim: #22C55E;
+  --accent-soft: rgba(74,222,128,0.12); --accent-glow: rgba(74,222,128,0.30);
+  --lime: #BEF264; --gold: #FDE68A; --red: #FC8181;
+  --red-soft: rgba(252,129,129,0.14); --green: #34D399;
+  --green-soft: rgba(52,211,153,0.14); --track: #0F2C14;
+  --shadow: 0 10px 34px rgba(0,0,0,0.5); --on-accent: #03110A;
+}
+
+[data-theme="midnight"] {
+  --bg: #09060F; --card: #110D1C; --card2: #170F26;
+  --border: #261840; --text: #EEE8FB; --text-soft: #8B7AAE;
+  --accent: #A78BFA; --accent-dim: #8B5CF6;
+  --accent-soft: rgba(167,139,250,0.12); --accent-glow: rgba(167,139,250,0.30);
+  --lime: #C084FC; --gold: #FCD34D; --red: #F87171;
+  --red-soft: rgba(248,113,113,0.14); --green: #34D399;
+  --green-soft: rgba(52,211,153,0.14); --track: #1A1030;
+  --shadow: 0 10px 34px rgba(0,0,0,0.6); --on-accent: #0A0618;
+}
+
 /* ============================================================
    BASE
    ============================================================ */
@@ -860,6 +904,53 @@ body.in-game .tabbar { display: none; }
   display: none;
 }
 .buzz-answer-input.show { display: block; }
+
+/* Theme cycle button */
+.theme-cycle-btn {
+  background: var(--card2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 7px 14px;
+  font-size: 13px; font-weight: 600; color: var(--text);
+  cursor: pointer; transition: border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.theme-cycle-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Expand / collapse sections */
+.expand-section { display: none; flex-direction: column; gap: 10px; margin-bottom: 0; }
+.expand-section.open { display: flex; }
+.load-more-btn {
+  background: transparent; border: 1px dashed var(--border);
+  border-radius: 12px; padding: 11px;
+  color: var(--text-soft); font-size: 13px; font-weight: 600;
+  cursor: pointer; text-align: center; width: 100%; margin-top: 4px;
+  transition: border-color 0.15s, color 0.15s;
+}
+.load-more-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Sprint level picker */
+.level-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+}
+.level-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 18px; padding: 18px 12px;
+  cursor: pointer; text-align: center;
+  transition: border-color 0.15s, transform 0.1s, box-shadow 0.15s;
+}
+.level-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 4px 18px var(--accent-glow); }
+.level-card:active { transform: scale(0.97); }
+.level-num { font-family: "Space Grotesk", sans-serif; font-size: 28px; font-weight: 700; color: var(--accent); margin-bottom: 6px; }
+.level-desc { font-size: 11.5px; color: var(--text-soft); margin-bottom: 8px; line-height: 1.4; }
+.level-best { font-size: 12px; font-weight: 600; color: var(--gold); }
+
+/* Improved mode-row hover */
+.mode-row:hover { border-color: var(--accent); transform: translateY(-1px); box-shadow: 0 4px 16px var(--accent-glow); }
+.mode-row:active { transform: scale(0.98); box-shadow: none; }
+.mp-mode-row:hover { border-color: #A78BFA; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(167,139,250,0.2); }
+.mp-mode-row:active { transform: scale(0.98); box-shadow: none; }
+
+/* Section dividers */
+.section-divider { height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent); margin: 8px 0; }
 </style>
 </head>
 <body>
@@ -976,12 +1067,9 @@ body.in-game .tabbar { display: none; }
 
     <div class="prof-list">
       <div class="prof-row">
-        <div class="pr-icon" aria-hidden="true">🌗</div>
-        <div class="pr-label">Dark mode</div>
-        <label class="toggle">
-          <input type="checkbox" id="themeToggle" aria-label="Toggle dark mode" />
-          <span class="slider"></span>
-        </label>
+        <div class="pr-icon" aria-hidden="true" id="themeIcon">🌑</div>
+        <div class="pr-label">Theme</div>
+        <button class="theme-cycle-btn" id="themeBtn" aria-label="Cycle theme">🌑 Dark</button>
       </div>
       <div class="prof-row">
         <div class="pr-icon" aria-hidden="true">⚡</div>
@@ -1000,6 +1088,17 @@ body.in-game .tabbar { display: none; }
       <div class="prof-row"><div class="pr-icon">🏆</div><div class="pr-label">Total score</div><div class="pr-value" id="profTotal">—</div></div>
       <div class="prof-row"><div class="pr-icon">🎮</div><div class="pr-label">Games played</div><div class="pr-value" id="profGames">—</div></div>
     </div>
+  </section>
+
+  <!-- ============== SPRINT LEVEL PICKER ============== -->
+  <section class="screen" id="screen-sprint-levels">
+    <div class="game-head">
+      <button class="gh-back" id="sprintLevelsBack" aria-label="Back to home">←</button>
+      <h1>Math Sprint</h1>
+      <span style="width:40px"></span>
+    </div>
+    <p class="stage-hint" style="text-align:left;margin-bottom:18px;">Choose a difficulty level — all 4 operations, progressively harder</p>
+    <div class="level-grid" id="levelGrid"></div>
   </section>
 
   <!-- ============== MATH SPRINT ============== -->
@@ -1566,14 +1665,31 @@ function updateDaily(solved) {
 /* ==================================================================
    THEME
    ================================================================== */
+const THEMES = [
+  { key: "dark",     label: "Dark",     icon: "🌑", meta: "#0A0C10" },
+  { key: "light",    label: "Light",    icon: "☀️", meta: "#F2F4F9" },
+  { key: "ocean",    label: "Ocean",    icon: "🌊", meta: "#050D1F" },
+  { key: "sunset",   label: "Sunset",   icon: "🌅", meta: "#150A04" },
+  { key: "forest",   label: "Forest",   icon: "🌿", meta: "#071209" },
+  { key: "midnight", label: "Midnight", icon: "🌙", meta: "#09060F" },
+];
 function applyTheme(theme) {
   document.documentElement.dataset.theme = theme;
   store.set("mfa-theme", theme);
-  $("themeToggle").checked = theme === "dark";
-  document.querySelector('meta[name="theme-color"]').content = theme === "dark" ? "#0A0C10" : "#F2F4F9";
-  if (stats.chart) renderChart(); // restyle for new palette
+  const t = THEMES.find(t => t.key === theme) || THEMES[0];
+  document.querySelector('meta[name="theme-color"]').content = t.meta;
+  const btn = $("themeBtn");
+  if (btn) btn.textContent = t.icon + " " + t.label;
+  const icon = $("themeIcon");
+  if (icon) icon.textContent = t.icon;
+  if (stats.chart) renderChart();
 }
-$("themeToggle").addEventListener("change", (e) => applyTheme(e.target.checked ? "dark" : "light"));
+function cycleTheme() {
+  const cur = document.documentElement.dataset.theme || "dark";
+  const idx = THEMES.findIndex(t => t.key === cur);
+  applyTheme(THEMES[(idx + 1) % THEMES.length].key);
+}
+$("themeBtn").addEventListener("click", cycleTheme);
 
 /* ==================================================================
    NAVIGATION (tabs + game screens)
@@ -1591,7 +1707,7 @@ function showTab(tab) {
   if (tab === "profile") renderProfile();
 }
 document.querySelectorAll(".tab-btn").forEach((b) => b.addEventListener("click", () => showTab(b.dataset.tab)));
-$("seeAllBtn").addEventListener("click", () => document.querySelector(".mode-list").scrollIntoView({ behavior: "smooth" }));
+$("seeAllBtn").addEventListener("click", () => { soloExpanded = true; renderModeList(); });
 
 /* ==================================================================
    HOME RENDERING
@@ -1652,29 +1768,60 @@ function renderDailyCard(container) {
   });
 }
 
+let soloExpanded = false;
+let mpExpanded = false;
+
+function makeModeRow(key) {
+  const g = GAMES[key];
+  const best = key === "sprint" ? getSprintOverallBest() : getBest(key);
+  const bestLabel = key === "sprint"
+    ? (best !== null ? "Best: " + best : "10 Levels")
+    : (best === null ? "—" : g.fmtBest(best));
+  const row = document.createElement("button");
+  row.className = "mode-row";
+  row.innerHTML = `
+    <div class="mode-icon" style="background:${g.bg}">${g.icon}</div>
+    <div class="mode-info">
+      <div class="mode-name">${g.name}</div>
+      <div class="mode-sub">${g.sub}</div>
+    </div>
+    <div class="mode-best">
+      <small>${g.crown && best !== null && key === "sprint" ? "👑 " : ""}Best</small>
+      <b>${bestLabel}</b>
+    </div>
+    <span class="mode-play" style="background:${g.playBg}" aria-hidden="true"></span>`;
+  row.setAttribute("aria-label", `Play ${g.name}. ${g.sub}.`);
+  row.addEventListener("click", () => startGame(key));
+  return row;
+}
+
+function getSprintOverallBest() {
+  let best = null;
+  for (let lv = 1; lv <= 10; lv++) {
+    const v = store.get(`mfa-best:sprint:L${lv}`, null);
+    if (v !== null && (best === null || v > best)) best = v;
+  }
+  return best;
+}
+
 function renderModeList() {
   const list = $("modeList");
   list.innerHTML = "";
-  for (const key of ["sprint", "pattern", "memory", "scramble", "reaction"]) {
-    const g = GAMES[key];
-    const best = getBest(key);
-    const row = document.createElement("button");
-    row.className = "mode-row";
-    row.innerHTML = `
-      <div class="mode-icon" style="background:${g.bg}">${g.icon}</div>
-      <div class="mode-info">
-        <div class="mode-name">${g.name}</div>
-        <div class="mode-sub">${g.sub}</div>
-      </div>
-      <div class="mode-best">
-        <small>${g.crown && best !== null ? "👑 " : ""}Best</small>
-        <b>${best === null ? "—" : g.fmtBest(best)}</b>
-      </div>
-      <span class="mode-play" style="background:${g.playBg}" aria-hidden="true"></span>`;
-    row.setAttribute("aria-label", `Play ${g.name}. ${g.sub}. Best ${best === null ? "none yet" : g.fmtBest(best)}`);
-    row.addEventListener("click", () => startGame(key));
-    list.appendChild(row);
+  for (const key of ["sprint", "daily"]) {
+    list.appendChild(makeModeRow(key));
   }
+  const expWrap = document.createElement("div");
+  expWrap.className = "expand-section" + (soloExpanded ? " open" : "");
+  expWrap.id = "soloExpandWrap";
+  for (const key of ["pattern", "memory", "scramble", "reaction"]) {
+    expWrap.appendChild(makeModeRow(key));
+  }
+  list.appendChild(expWrap);
+  const moreBtn = document.createElement("button");
+  moreBtn.className = "load-more-btn";
+  moreBtn.textContent = soloExpanded ? "▲ Show less" : "▾ More games";
+  moreBtn.addEventListener("click", () => { soloExpanded = !soloExpanded; renderModeList(); });
+  list.appendChild(moreBtn);
 }
 
 /* ==================================================================
@@ -1719,7 +1866,7 @@ $("nameInput").addEventListener("input", (e) => {
 const round = {
   game: null, timeLimit: 0, timeLeft: 0, interval: null,
   score: 0, streak: 0, maxStreak: 0, solved: 0, attempts: 0,
-  times: [], qStart: 0, startedAt: 0, ended: false,
+  times: [], qStart: 0, startedAt: 0, ended: false, level: null,
 };
 
 function activeGameScreen() { return $("screen-" + round.game); }
@@ -1728,7 +1875,7 @@ function beginRound(game, secs) {
   Object.assign(round, {
     game, timeLimit: secs, timeLeft: secs, interval: null,
     score: 0, streak: 0, maxStreak: 0, solved: 0, attempts: 0,
-    times: [], qStart: 0, startedAt: performance.now(), ended: false,
+    times: [], qStart: 0, startedAt: performance.now(), ended: false, level: null,
   });
   document.body.classList.add("in-game");
   showScreen("screen-" + game);
@@ -1804,13 +1951,20 @@ document.querySelectorAll(".js-quit").forEach((b) => b.addEventListener("click",
    GAME LAUNCHER
    ================================================================== */
 function startGame(key) {
-  if (key === "sprint") return startSprint();
+  if (key === "sprint") return showSprintLevels();
   if (key === "pattern") return startPattern();
   if (key === "memory") return startMemory();
   if (key === "scramble") return startScramble();
   if (key === "reaction") return startReaction();
   if (key === "daily") return startDaily();
 }
+
+function showSprintLevels() {
+  document.body.classList.add("in-game");
+  showScreen("screen-sprint-levels");
+  renderLevelGrid();
+}
+$("sprintLevelsBack").addEventListener("click", () => showTab("home"));
 
 /* ==================================================================
    MATH PROBLEM GENERATION (sprint + daily)
@@ -1851,7 +2005,32 @@ function threeOp() {
   return { parts, answer };
 }
 
-function genSprintProblem(qIndex) {
+const SPRINT_LEVEL_CFG = [
+  null,
+  { ops: ["add","sub"],              lo:1,  hi:9,  three:0    },
+  { ops: ["add","sub"],              lo:2,  hi:15, three:0    },
+  { ops: ["add","sub","mul"],        lo:1,  hi:9,  three:0    },
+  { ops: ["add","sub","mul"],        lo:2,  hi:12, three:0.10 },
+  { ops: ["add","sub","mul","div"],  lo:2,  hi:15, three:0.15 },
+  { ops: ["add","sub","mul","div"],  lo:2,  hi:20, three:0.25 },
+  { ops: ["add","sub","mul","div"],  lo:5,  hi:25, three:0.35 },
+  { ops: ["add","sub","mul","div"],  lo:5,  hi:40, three:0.45 },
+  { ops: ["add","sub","mul","div"],  lo:10, hi:60, three:0.55 },
+  { ops: ["add","sub","mul","div"],  lo:10, hi:99, three:0.65 },
+];
+const SPRINT_LEVEL_DESCS = [
+  "", "Single digits · + −", "Bigger sums · + −", "+ − × mix",
+  "Intro 3-step", "All 4 ops", "Harder mix",
+  "Speed builder", "Full range", "Expert ops", "Master level",
+];
+
+function genSprintProblem(level) {
+  const cfg = SPRINT_LEVEL_CFG[level] || SPRINT_LEVEL_CFG[10];
+  if (Math.random() < cfg.three) return threeOp();
+  return twoOp(pick(cfg.ops), cfg.lo, cfg.hi);
+}
+
+function genMpProblem(qIndex) {
   const threeOpChance = qIndex < 5 ? 0 : qIndex < 12 ? 0.3 : 0.55;
   if (Math.random() < threeOpChance) return threeOp();
   const hi = qIndex < 5 ? 30 : qIndex < 12 ? 60 : 99;
@@ -1886,18 +2065,39 @@ function makeDistractors(answer) {
 const SPRINT_QUESTIONS = 20;
 const SPRINT_TIME = 60;
 let sprint = {};
+let sprintLevel = 1;
 
-function startSprint() {
+function renderLevelGrid() {
+  const grid = $("levelGrid");
+  grid.innerHTML = "";
+  for (let lv = 1; lv <= 10; lv++) {
+    const best = store.get(`mfa-best:sprint:L${lv}`, null);
+    const card = document.createElement("button");
+    card.className = "level-card";
+    card.innerHTML = `
+      <div class="level-num">L${lv}</div>
+      <div class="level-desc">${SPRINT_LEVEL_DESCS[lv]}</div>
+      <div class="level-best">${best !== null ? "Best: " + best : "—"}</div>`;
+    card.addEventListener("click", () => startSprintLevel(lv));
+    grid.appendChild(card);
+  }
+}
+
+function startSprintLevel(lv) {
+  sprintLevel = lv;
   beginRound("sprint", SPRINT_TIME);
+  round.level = lv;
   sprint = { q: 0, current: null, locked: false, powers: { time: 2, fifty: 2, skip: 1 } };
   drawPowerups();
   $("sprintFeedback").className = "feedback";
   sprintNext();
 }
 
+function startSprint() { showSprintLevels(); }
+
 function sprintNext() {
   if (sprint.q >= SPRINT_QUESTIONS) return endRound();
-  sprint.current = genSprintProblem(sprint.q);
+  sprint.current = genSprintProblem(sprintLevel);
   sprint.locked = false;
   round.qStart = performance.now();
 
@@ -2254,9 +2454,19 @@ function endRound(quiet) {
   const fastest = round.times.length ? Math.min(...round.times) : null;
   const duration = Math.round((performance.now() - round.startedAt) / 1000);
 
-  // Local records
-  const newBest = headline !== null && isNewBest(round.game, headline);
-  if (newBest) store.set("mfa-best:" + round.game, headline);
+  // Local records — sprint tracks best per level; other games use global key
+  let newBest = false;
+  if (headline !== null) {
+    if (round.game === "sprint" && round.level) {
+      const lvKey = `mfa-best:sprint:L${round.level}`;
+      const prev = store.get(lvKey, null);
+      newBest = prev === null || headline > prev;
+      if (newBest) store.set(lvKey, headline);
+    } else {
+      newBest = isNewBest(round.game, headline);
+      if (newBest) store.set("mfa-best:" + round.game, headline);
+    }
+  }
   bumpTotals(round.game === "sprint" ? round.score : round.solved * 10);
   bumpDayStreak();
   if (round.game === "daily") updateDaily(round.solved);
@@ -2265,7 +2475,9 @@ function endRound(quiet) {
   $("resultsIcon").textContent = g.icon;
   $("resultsIcon").style.background = g.bg;
   $("resultsTitle").textContent = round.game === "daily" && round.solved >= DAILY_GOAL ? "Challenge complete! ⭐" : g.name;
-  $("resultsSub").textContent = round.game === "daily"
+  $("resultsSub").textContent = round.game === "sprint"
+    ? `Level ${round.level} · ${SPRINT_LEVEL_DESCS[round.level] || ""}`
+    : round.game === "daily"
     ? `${round.solved} / ${DAILY_GOAL} problems in ${DAILY_TIME}s`
     : g.sub;
   $("bestBadge").classList.toggle("show", newBest && (headline ?? 0) !== 0);
@@ -2288,23 +2500,29 @@ function endRound(quiet) {
   $("resStatGrid").innerHTML = cards.map(([l, v]) => `<div class="stat-card"><b>${v}</b><small>${l}</small></div>`).join("");
 
   showScreen("screen-results");
-  if (quiet && round.solved === 0 && round.attempts === 0) { showTab("home"); return; } // backed out instantly: nothing to save
-  saveSession({
-    device_id: deviceId,
-    game_id: round.game,
-    mode: round.game === "daily" ? "daily" : "standard",
-    difficulty: "standard",
-    time_limit: round.timeLimit || null,
-    score: isReaction ? (bestMs ?? 0) : round.score || round.solved,
-    solved: round.solved,
-    attempts: round.attempts,
-    accuracy_pct: accuracy,
-    avg_time_secs: avg !== null ? Number(avg.toFixed(2)) : null,
-    fastest_time_secs: fastest !== null ? Number(fastest.toFixed(3)) : null,
-    max_streak: round.maxStreak,
-    duration_secs: duration,
-    metadata: { name: store.get("mfa-name", "Player") },
-  });
+  if (quiet && round.solved === 0 && round.attempts === 0) { showTab("home"); return; }
+  if (round.game === "sprint") {
+    saveSession({
+      device_id: deviceId,
+      game_id: "sprint",
+      mode: "standard",
+      difficulty: `level-${round.level}`,
+      level: round.level,
+      time_limit: SPRINT_TIME,
+      score: round.score,
+      solved: round.solved,
+      attempts: round.attempts,
+      accuracy_pct: accuracy,
+      avg_time_secs: avg !== null ? Number(avg.toFixed(2)) : null,
+      fastest_time_secs: fastest !== null ? Number(fastest.toFixed(3)) : null,
+      max_streak: round.maxStreak,
+      duration_secs: duration,
+      metadata: { name: store.get("mfa-name", "Player"), level: round.level },
+    });
+  } else {
+    $("saveStatus").className = "save-status";
+    $("saveStatus").textContent = "";
+  }
 }
 
 async function saveSession(row) {
@@ -2340,7 +2558,7 @@ const stats = { cache: null, chart: null, metric: "score", filter: "all" };
 function buildStatChips() {
   const row = $("statChips");
   row.innerHTML = "";
-  const entries = [["all", "All"], ...Object.entries(GAMES).map(([k, g]) => [k, g.name])];
+  const entries = [["all", "All"], ["sprint", "Math Sprint"]];
   for (const [key, label] of entries) {
     const chip = document.createElement("button");
     chip.className = "chip";
@@ -2534,28 +2752,40 @@ let mp = {
 };
 
 /* Home — render multiplayer section */
+function makeMpRow(key, g) {
+  const row = document.createElement("button");
+  row.className = "mp-mode-row";
+  const playerRange = g.minP === g.maxP ? `${g.minP} players` : `${g.minP}–${g.maxP} players`;
+  row.innerHTML = `
+    <div class="mode-icon" style="background:rgba(167,139,250,0.15)">${g.icon}</div>
+    <div class="mode-info">
+      <div class="mode-name">${g.name}</div>
+      <div class="mode-sub">${g.sub}</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;margin-right:4px;">
+      <span class="mp-player-tag">${g.tag}</span>
+      <span style="font-size:11px;color:var(--text-soft);">${playerRange}</span>
+    </div>
+    <span class="mp-play-btn" aria-hidden="true"></span>`;
+  row.setAttribute("aria-label", `Play ${g.name}. ${g.sub}`);
+  row.addEventListener("click", () => openMpSetup(key));
+  return row;
+}
+
 function renderMpModeList() {
   const list = $("mpModeList");
   list.innerHTML = "";
-  for (const [key, g] of Object.entries(MP_GAMES)) {
-    const row = document.createElement("button");
-    row.className = "mp-mode-row";
-    const playerRange = g.minP === g.maxP ? `${g.minP} players` : `${g.minP}–${g.maxP} players`;
-    row.innerHTML = `
-      <div class="mode-icon" style="background:rgba(167,139,250,0.15)">${g.icon}</div>
-      <div class="mode-info">
-        <div class="mode-name">${g.name}</div>
-        <div class="mode-sub">${g.sub}</div>
-      </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;margin-right:4px;">
-        <span class="mp-player-tag">${g.tag}</span>
-        <span style="font-size:11px;color:var(--text-soft);">${playerRange}</span>
-      </div>
-      <span class="mp-play-btn" aria-hidden="true"></span>`;
-    row.setAttribute("aria-label", `Play ${g.name}. ${g.sub}`);
-    row.addEventListener("click", () => openMpSetup(key));
-    list.appendChild(row);
-  }
+  const entries = Object.entries(MP_GAMES);
+  const expWrap = document.createElement("div");
+  expWrap.className = "expand-section" + (mpExpanded ? " open" : "");
+  expWrap.id = "mpExpandWrap";
+  for (const [key, g] of entries) expWrap.appendChild(makeMpRow(key, g));
+  list.appendChild(expWrap);
+  const moreBtn = document.createElement("button");
+  moreBtn.className = "load-more-btn";
+  moreBtn.textContent = mpExpanded ? "▲ Hide multiplayer games" : "▾ Load multiplayer games (" + entries.length + ")";
+  moreBtn.addEventListener("click", () => { mpExpanded = !mpExpanded; renderMpModeList(); });
+  list.appendChild(moreBtn);
 }
 
 /* ==================================================================
@@ -2757,7 +2987,7 @@ function updateDuelScores() {
 }
 
 function duelNext() {
-  duel.current = genSprintProblem(duel.scores[0] + duel.scores[1]);
+  duel.current = genMpProblem(duel.scores[0] + duel.scores[1]);
   duel.locked = false;
   const expr = exprHTML(duel.current.parts);
   $("duelQuestion").innerHTML = expr;
@@ -3016,7 +3246,7 @@ function updateTugRope() {
 }
 
 function tugNext() {
-  tug.current = genSprintProblem(Math.abs(tug.pos - 5));
+  tug.current = genMpProblem(Math.abs(tug.pos - 5));
   tug.locked = false;
   $("tugQuestion").innerHTML = exprHTML(tug.current.parts);
   const opts = shuffle([tug.current.answer, ...makeDistractors(tug.current.answer)]);
@@ -3133,7 +3363,7 @@ function tournUpdateTimer() {
 }
 
 function tournNext() {
-  tourn.current = genSprintProblem(tourn.solved);
+  tourn.current = genMpProblem(tourn.solved);
   tourn.locked = false;
   $("tournExpr").innerHTML = exprHTML(tourn.current.parts);
   const opts = shuffle([tourn.current.answer, ...makeDistractors(tourn.current.answer)]);
@@ -3216,7 +3446,7 @@ function potatoTick() {
 }
 
 function potatoNext() {
-  potato.current = genSprintProblem(mp.scores[potato.idx]);
+  potato.current = genMpProblem(mp.scores[potato.idx]);
   potato.locked = false;
   potato.timeLeft = POTATO_TIME;
   $("potatoTimerBig").textContent = POTATO_TIME;
@@ -3634,7 +3864,7 @@ function survivorNext() {
     tries++;
   }
   const idx = mp.currentIdx;
-  survivor.current = genSprintProblem(survivor.round);
+  survivor.current = genMpProblem(survivor.round);
   survivor.locked = false;
   $("survivorKicker").textContent = `${mp.players[idx]}'s turn — answer or you're out!`;
   $("survivorExpr").innerHTML = exprHTML(survivor.current.parts);
@@ -3722,7 +3952,7 @@ function sqUpdateScores() {
 }
 
 function sqNext() {
-  sq.current = genSprintProblem(sq.round);
+  sq.current = genMpProblem(sq.round);
   sq.locked = false;
   sq.buzzedIdx = null;
   $("sqRound").textContent = `${sq.round + 1}/${SQ_ROUNDS}`;
