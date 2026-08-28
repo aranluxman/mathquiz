@@ -1,0 +1,800 @@
+
+/* ==================================================================
+   GAME REGISTRY
+   bestIsLower: reaction time is a "lower is better" score.
+   ================================================================== */
+const GAMES = {
+  sprint:   { name: "Math Sprint",   sub: "Solve as many as you can",   icon: "⚡", bg: "rgba(45,212,191,0.16)",  playBg: "#14B8A6", crown: true,  fmtBest: (v) => v },
+  pattern:  { name: "Pattern Match", sub: "Find the matching pattern",  icon: "🧩", bg: "rgba(248,113,113,0.16)", playBg: "#EF4444", fmtBest: (v) => v },
+  memory:   { name: "Memory Grid",   sub: "Remember. Flip. Match.",     icon: "🧠", bg: "rgba(52,211,153,0.16)",  playBg: "#22C55E", fmtBest: (v) => v },
+  scramble: { name: "Word Scramble", sub: "Unscramble the words",       icon: "🔤", bg: "rgba(251,191,36,0.16)",  playBg: "#F59E0B", fmtBest: (v) => v },
+  reaction: { name: "Reaction Tap",  sub: "Tap when the screen flips",  icon: "👆", bg: "rgba(45,212,191,0.16)",  playBg: "#14B8A6", bestIsLower: true, fmtBest: (v) => (v / 1000).toFixed(2) + "s" },
+  daily:    { name: "Number Flow",   sub: "Daily challenge",            icon: "⭐", bg: "rgba(45,212,191,0.16)",  playBg: "#14B8A6", fmtBest: (v) => v },
+};
+const DAILY_GOAL = 15;
+const DAILY_TIME = 90;
+
+/* ==================================================================
+   LOCAL RECORDS: bests, totals, day-streak, daily challenge
+   ================================================================== */
+function getBest(game) { return store.get("mfa-best:" + game, null); }
+function setBestIfBetter(game, value) {
+  const prev = getBest(game);
+  const better = prev === null || (GAMES[game].bestIsLower ? value < prev : value > prev);
+  if (better && value !== null) { store.set("mfa-best:" + game, value); return prev !== null; } // true => beat an existing best
+  return false;
+}
+function isNewBest(game, value) {
+  const prev = getBest(game);
+  return value !== null && (prev === null || (GAMES[game].bestIsLower ? value < prev : value > prev));
+}
+
+function bumpTotals(score) {
+  store.set("mfa-total-score", store.get("mfa-total-score", 0) + Math.max(0, score));
+  store.set("mfa-games-played", store.get("mfa-games-played", 0) + 1);
+}
+
+// Day streak: any completed round counts for the day.
+function bumpDayStreak() {
+  const s = store.get("mfa-streak", { cur: 0, best: 0, last: null });
+  const today = todayKey();
+  if (s.last === today) return s;
+  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  s.cur = s.last === yesterday ? s.cur + 1 : 1;
+  s.best = Math.max(s.best, s.cur);
+  s.last = today;
+  store.set("mfa-streak", s);
+  return s;
+}
+function getDayStreak() {
+  const s = store.get("mfa-streak", { cur: 0, best: 0, last: null });
+  // A streak shown on the home screen is broken if you didn't play yesterday or today.
+  const today = todayKey();
+  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  if (s.last !== today && s.last !== yesterday) s.cur = 0;
+  return s;
+}
+
+function getDaily(date) { return store.get("mfa-daily:" + (date || todayKey()), { progress: 0, completed: false }); }
+function updateDaily(solved) {
+  const d = getDaily();
+  d.progress = Math.max(d.progress, solved);
+  d.completed = d.completed || solved >= DAILY_GOAL;
+  store.set("mfa-daily:" + todayKey(), d);
+}
+
+/* ==================================================================
+   THEME
+   ================================================================== */
+const THEMES = [
+  { key: "dark",     label: "Dark",     icon: "🌑", meta: "#0A0C10" },
+  { key: "light",    label: "Light",    icon: "☀️", meta: "#F2F4F9" },
+  { key: "ocean",    label: "Ocean",    icon: "🌊", meta: "#050D1F" },
+  { key: "sunset",   label: "Sunset",   icon: "🌅", meta: "#150A04" },
+  { key: "forest",   label: "Forest",   icon: "🌿", meta: "#071209" },
+  { key: "midnight", label: "Midnight", icon: "🌙", meta: "#09060F" },
+];
+function applyTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  store.set("mfa-theme", theme);
+  const t = THEMES.find(t => t.key === theme) || THEMES[0];
+  document.querySelector('meta[name="theme-color"]').content = t.meta;
+  const btn = $("themeBtn");
+  if (btn) btn.textContent = t.icon + " " + t.label;
+  const icon = $("themeIcon");
+  if (icon) icon.textContent = t.icon;
+  if (stats.chart) renderChart();
+}
+function cycleTheme() {
+  const cur = document.documentElement.dataset.theme || "dark";
+  const idx = THEMES.findIndex(t => t.key === cur);
+  applyTheme(THEMES[(idx + 1) % THEMES.length].key);
+}
+$("themeBtn").addEventListener("click", cycleTheme);
+
+/* ==================================================================
+   NAVIGATION (tabs + game screens)
+   ================================================================== */
+function showScreen(id) {
+  document.querySelectorAll(".screen").forEach((s) => s.classList.toggle("active", s.id === id));
+}
+function showTab(tab) {
+  document.body.classList.remove("in-game");
+  showScreen("tab-" + tab);
+  document.querySelectorAll(".tab-btn").forEach((b) => b.setAttribute("aria-current", b.dataset.tab === tab ? "true" : "false"));
+  if (tab === "home") renderHome();
+  if (tab === "challenges") renderChallenges();
+  if (tab === "stats") openStats();
+  if (tab === "profile") renderProfile();
+}
+document.querySelectorAll(".tab-btn").forEach((b) => b.addEventListener("click", () => showTab(b.dataset.tab)));
+$("seeAllBtn").addEventListener("click", () => { soloExpanded = true; renderModeList(); });
+
+/* ==================================================================
+   HOME RENDERING
+   ================================================================== */
+function renderHome() {
+  $("streakChip").textContent = getDayStreak().cur;
+  renderDailyCard($("dailyCardHome"));
+  renderModeList();
+  const s = getDayStreak();
+  $("pStreak").textContent = s.cur;
+  $("pStreakBest").textContent = s.best;
+  $("pTotal").textContent = store.get("mfa-total-score", 0).toLocaleString();
+  $("pGames").textContent = store.get("mfa-games-played", 0).toLocaleString();
+  $("supaBadge").textContent = sb ? "⚡ Supabase" : "⚠ offline";
+}
+
+function renderDailyCard(container) {
+  const d = getDaily();
+  const pct = Math.min(100, Math.round((d.progress / DAILY_GOAL) * 100));
+  const date = new Date().toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  const ring = 2 * Math.PI * 36;
+  const btnLabel = d.completed ? "Play again" : d.progress > 0 ? "Continue Challenge" : "Start Challenge";
+  container.innerHTML = `
+    <div class="daily-card">
+      <div class="daily-top">
+        <div>
+          <div class="daily-kicker">Daily Challenge</div>
+          <div class="daily-title">Number Flow</div>
+        </div>
+        <div class="daily-date">📅 ${date}</div>
+      </div>
+      <div class="daily-body">
+        <div class="daily-info">
+          <div class="daily-sub">Solve ${DAILY_GOAL} problems in ${DAILY_TIME} seconds</div>
+          <div class="daily-progress">
+            <span class="daily-count">${d.completed ? "✅" : "⭐"} ${d.progress} / ${DAILY_GOAL}</span>
+            <div class="daily-bar"><i style="width:${pct}%"></i></div>
+          </div>
+        </div>
+        <div class="daily-ring" aria-hidden="true">
+          <svg width="86" height="86">
+            <circle cx="43" cy="43" r="36" stroke="var(--track)" stroke-width="7" fill="none"/>
+            <circle cx="43" cy="43" r="36" stroke="var(--accent)" stroke-width="7" fill="none"
+              stroke-linecap="round" stroke-dasharray="${ring}" stroke-dashoffset="${ring * (1 - pct / 100)}"/>
+          </svg>
+          <div class="ring-label"><b>${DAILY_TIME}</b><small>SEC</small></div>
+        </div>
+      </div>
+      <div class="daily-actions">
+        <button class="btn-accent js-daily-start">${btnLabel}</button>
+        <button class="btn-ghost js-daily-new">New Challenge</button>
+      </div>
+    </div>`;
+  container.querySelector(".js-daily-start").addEventListener("click", () => startGame("daily"));
+  container.querySelector(".js-daily-new").addEventListener("click", () => {
+    store.set("mfa-daily:" + todayKey(), { progress: 0, completed: false });
+    startGame("daily");
+  });
+}
+
+let soloExpanded = false;
+let mpExpanded = false;
+
+function makeModeRow(key) {
+  const g = GAMES[key];
+  const best = key === "sprint" ? getSprintOverallBest() : getBest(key);
+  const bestLabel = key === "sprint"
+    ? (best !== null ? "Best: " + best : "10 Levels")
+    : (best === null ? "—" : g.fmtBest(best));
+  const row = document.createElement("button");
+  row.className = "mode-row";
+  row.innerHTML = `
+    <div class="mode-icon" style="background:${g.bg}">${g.icon}</div>
+    <div class="mode-info">
+      <div class="mode-name">${g.name}</div>
+      <div class="mode-sub">${g.sub}</div>
+    </div>
+    <div class="mode-best">
+      <small>${g.crown && best !== null && key === "sprint" ? "👑 " : ""}Best</small>
+      <b>${bestLabel}</b>
+    </div>
+    <span class="mode-play" style="background:${g.playBg}" aria-hidden="true"></span>`;
+  row.setAttribute("aria-label", `Play ${g.name}. ${g.sub}.`);
+  row.addEventListener("click", () => startGame(key));
+  return row;
+}
+
+function getSprintOverallBest() {
+  let best = null;
+  for (let lv = 1; lv <= 10; lv++) {
+    const v = store.get(`mfa-best:sprint:L${lv}`, null);
+    if (v !== null && (best === null || v > best)) best = v;
+  }
+  return best;
+}
+
+function renderModeList() {
+  const list = $("modeList");
+  list.innerHTML = "";
+  for (const key of ["sprint", "daily"]) {
+    list.appendChild(makeModeRow(key));
+  }
+  const expWrap = document.createElement("div");
+  expWrap.className = "expand-section" + (soloExpanded ? " open" : "");
+  expWrap.id = "soloExpandWrap";
+  for (const key of ["pattern", "memory", "scramble", "reaction"]) {
+    expWrap.appendChild(makeModeRow(key));
+  }
+  list.appendChild(expWrap);
+  const moreBtn = document.createElement("button");
+  moreBtn.className = "load-more-btn";
+  moreBtn.textContent = soloExpanded ? "▲ Show less" : "▾ More games";
+  moreBtn.addEventListener("click", () => { soloExpanded = !soloExpanded; renderModeList(); });
+  list.appendChild(moreBtn);
+}
+
+/* ==================================================================
+   CHALLENGES TAB
+   ================================================================== */
+function renderChallenges() {
+  renderDailyCard($("dailyCardChal"));
+  const row = $("weekRow");
+  row.innerHTML = "";
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(Date.now() - i * 86400000);
+    const key = d.toISOString().slice(0, 10);
+    const rec = getDaily(key);
+    const el = document.createElement("div");
+    el.className = "week-day" + (rec.completed ? " done" : "");
+    el.innerHTML = `<div class="wd-dot">${rec.completed ? "⭐" : "·"}</div><small>${d.toLocaleDateString(undefined, { weekday: "short" })}</small>`;
+    row.appendChild(el);
+  }
+}
+
+/* ==================================================================
+   PROFILE TAB
+   ================================================================== */
+function renderProfile() {
+  const name = store.get("mfa-name", "Player");
+  $("nameInput").value = name;
+  $("avatar").textContent = (name.trim()[0] || "P").toUpperCase();
+  $("syncStatus").textContent = sb ? "Connected" : "Not configured";
+  const s = getDayStreak();
+  $("profStreak").textContent = `${s.cur} days (best ${s.best})`;
+  $("profTotal").textContent = store.get("mfa-total-score", 0).toLocaleString();
+  $("profGames").textContent = store.get("mfa-games-played", 0).toLocaleString();
+}
+$("nameInput").addEventListener("input", (e) => {
+  store.set("mfa-name", e.target.value || "Player");
+  $("avatar").textContent = ((e.target.value || "P").trim()[0] || "P").toUpperCase();
+});
+
+/* ==================================================================
+   ROUND ENGINE — shared timer / HUD / pause for all timed games
+   ================================================================== */
+const round = {
+  game: null, timeLimit: 0, timeLeft: 0, interval: null,
+  score: 0, streak: 0, maxStreak: 0, solved: 0, attempts: 0,
+  times: [], qStart: 0, startedAt: 0, ended: false, level: null,
+};
+
+function activeGameScreen() { return $("screen-" + round.game); }
+
+function beginRound(game, secs) {
+  Object.assign(round, {
+    game, timeLimit: secs, timeLeft: secs, interval: null,
+    score: 0, streak: 0, maxStreak: 0, solved: 0, attempts: 0,
+    times: [], qStart: 0, startedAt: performance.now(), ended: false, level: null,
+  });
+  document.body.classList.add("in-game");
+  showScreen("screen-" + game);
+  updateHUD();
+  if (secs > 0) {
+    round.interval = setInterval(() => {
+      round.timeLeft--;
+      updateHUD();
+      if (round.timeLeft <= 0) endRound();
+    }, 1000);
+  }
+}
+
+function updateHUD() {
+  const scr = activeGameScreen();
+  if (!scr) return;
+  const t = scr.querySelector(".js-time");
+  if (t) {
+    const m = Math.floor(Math.max(0, round.timeLeft) / 60);
+    const s = Math.max(0, round.timeLeft) % 60;
+    t.textContent = `${m}:${String(s).padStart(2, "0")}`;
+    scr.querySelector(".js-timebar").style.width = (round.timeLeft / round.timeLimit) * 100 + "%";
+    scr.querySelector(".hud").classList.toggle("low", round.timeLeft <= 10);
+  }
+  const sc = scr.querySelector(".js-score");
+  if (sc) sc.textContent = round.game === "memory" || round.game === "scramble" || round.game === "pattern" || round.game === "daily" ? round.solved : round.score;
+  const st = scr.querySelector(".js-streak");
+  if (st) st.textContent = "x" + round.streak;
+}
+
+function registerCorrect(points) {
+  round.streak++;
+  round.maxStreak = Math.max(round.maxStreak, round.streak);
+  round.solved++;
+  round.attempts++;
+  round.score += points;
+  if (round.qStart) round.times.push((performance.now() - round.qStart) / 1000);
+  updateHUD();
+}
+function registerWrong() {
+  round.streak = 0;
+  round.attempts++;
+  updateHUD();
+}
+
+/* Pause */
+document.querySelectorAll(".js-pause").forEach((b) => b.addEventListener("click", pauseRound));
+function pauseRound() {
+  if (round.ended || !round.interval) return;
+  clearInterval(round.interval);
+  round.interval = "paused";
+  $("pauseOverlay").classList.add("show");
+}
+$("resumeBtn").addEventListener("click", () => {
+  $("pauseOverlay").classList.remove("show");
+  if (round.interval === "paused") {
+    round.interval = setInterval(() => {
+      round.timeLeft--;
+      updateHUD();
+      if (round.timeLeft <= 0) endRound();
+    }, 1000);
+  }
+  // Give typed games their keyboard back.
+  if (round.game === "daily") $("dailyInput").focus();
+  if (round.game === "scramble") $("scrambleInput").focus();
+});
+$("endRoundBtn").addEventListener("click", () => { $("pauseOverlay").classList.remove("show"); endRound(); });
+document.querySelectorAll(".js-quit").forEach((b) => b.addEventListener("click", () => {
+  if (!round.ended) endRound(true); else showTab("home");
+}));
+
+/* ==================================================================
+   GAME LAUNCHER
+   ================================================================== */
+function startGame(key) {
+  if (key === "sprint") return showSprintLevels();
+  if (key === "pattern") return startPattern();
+  if (key === "memory") return startMemory();
+  if (key === "scramble") return startScramble();
+  if (key === "reaction") return startReaction();
+  if (key === "daily") return startDaily();
+}
+
+function showSprintLevels() {
+  document.body.classList.add("in-game");
+  showScreen("screen-sprint-levels");
+  renderLevelGrid();
+}
+$("sprintLevelsBack").addEventListener("click", () => showTab("home"));
+
+/* ==================================================================
+   MATH PROBLEM GENERATION (sprint + daily)
+   - subtraction never goes negative
+   - division always lands on a whole number
+   - sprint mixes in 3-operand expressions as questions get harder
+   ================================================================== */
+function twoOp(kind, lo, hi) {
+  let a, b, answer, sym;
+  switch (kind) {
+    case "add": a = randInt(lo, hi); b = randInt(lo, hi); answer = a + b; sym = "+"; break;
+    case "sub": a = randInt(lo, hi); b = randInt(lo, hi); if (b > a) [a, b] = [b, a]; answer = a - b; sym = "−"; break;
+    case "mul": a = randInt(Math.max(2, Math.floor(lo / 3)), Math.min(12, hi)); b = randInt(2, Math.min(12, hi)); answer = a * b; sym = "×"; break;
+    case "div": { b = randInt(2, Math.min(12, hi)); answer = randInt(2, Math.min(12, hi)); a = b * answer; sym = "÷"; break; }
+  }
+  return { parts: [a, sym, b], answer };
+}
+
+function threeOp() {
+  // Templates evaluated with normal precedence (× ÷ before + −).
+  const tpl = pick(["axb+c", "axb-c", "a+bxc", "axb-cdivd"]);
+  let a, b, c, d, answer, parts;
+  if (tpl === "axb+c") {
+    a = randInt(3, 12); b = randInt(3, 12); c = randInt(2, 40);
+    answer = a * b + c; parts = [a, "×", b, "+", c];
+  } else if (tpl === "axb-c") {
+    a = randInt(3, 12); b = randInt(3, 12); c = randInt(2, a * b);
+    answer = a * b - c; parts = [a, "×", b, "−", c];
+  } else if (tpl === "a+bxc") {
+    a = randInt(5, 60); b = randInt(3, 12); c = randInt(3, 12);
+    answer = a + b * c; parts = [a, "+", b, "×", c];
+  } else {
+    d = randInt(2, 9); const k = randInt(2, 9); c = d * k;
+    a = randInt(3, 12); b = randInt(3, 12);
+    if (a * b - k < 0) { a = 12; b = 12; }
+    answer = a * b - k; parts = [a, "×", b, "−", c, "÷", d];
+  }
+  return { parts, answer };
+}
+
+const SPRINT_LEVEL_CFG = [
+  null,
+  { ops: ["add","sub"],              lo:1,  hi:9,  three:0    },
+  { ops: ["add","sub"],              lo:2,  hi:15, three:0    },
+  { ops: ["add","sub","mul"],        lo:1,  hi:9,  three:0    },
+  { ops: ["add","sub","mul"],        lo:2,  hi:12, three:0.10 },
+  { ops: ["add","sub","mul","div"],  lo:2,  hi:15, three:0.15 },
+  { ops: ["add","sub","mul","div"],  lo:2,  hi:20, three:0.25 },
+  { ops: ["add","sub","mul","div"],  lo:5,  hi:25, three:0.35 },
+  { ops: ["add","sub","mul","div"],  lo:5,  hi:40, three:0.45 },
+  { ops: ["add","sub","mul","div"],  lo:10, hi:60, three:0.55 },
+  { ops: ["add","sub","mul","div"],  lo:10, hi:99, three:0.65 },
+];
+const SPRINT_LEVEL_DESCS = [
+  "", "Single digits · + −", "Bigger sums · + −", "+ − × mix",
+  "Intro 3-step", "All 4 ops", "Harder mix",
+  "Speed builder", "Full range", "Expert ops", "Master level",
+];
+
+function genSprintProblem(level) {
+  const cfg = SPRINT_LEVEL_CFG[level] || SPRINT_LEVEL_CFG[10];
+  if (Math.random() < cfg.three) return threeOp();
+  return twoOp(pick(cfg.ops), cfg.lo, cfg.hi);
+}
+
+function genMpProblem(qIndex) {
+  const threeOpChance = qIndex < 5 ? 0 : qIndex < 12 ? 0.3 : 0.55;
+  if (Math.random() < threeOpChance) return threeOp();
+  const hi = qIndex < 5 ? 30 : qIndex < 12 ? 60 : 99;
+  return twoOp(pick(["add", "sub", "mul", "div"]), 2, hi);
+}
+
+function genDailyProblem() {
+  return twoOp(pick(["add", "sub", "mul", "div"]), 2, 50);
+}
+
+function exprHTML(parts) {
+  return parts.map((p) => (typeof p === "number" ? p : `<span class="op">${p}</span>`)).join(" ");
+}
+function exprSpoken(parts) {
+  const words = { "+": "plus", "−": "minus", "×": "times", "÷": "divided by" };
+  return parts.map((p) => (typeof p === "number" ? p : words[p])).join(" ");
+}
+
+function makeDistractors(answer) {
+  const out = new Set();
+  while (out.size < 3) {
+    const deltas = [1, 2, 3, 4, 6, 8, 10, 12, Math.max(2, Math.round(answer * 0.1))];
+    const d = answer + pick(deltas) * (Math.random() < 0.5 ? -1 : 1);
+    if (d >= 0 && d !== answer && !out.has(d)) out.add(d);
+  }
+  return [...out];
+}
+
+/* ==================================================================
+   GAME 1 — MATH SPRINT (multiple choice + power-ups)
+   ================================================================== */
+const SPRINT_QUESTIONS = 20;
+const SPRINT_TIME = 60;
+let sprint = {};
+let sprintLevel = 1;
+
+function renderLevelGrid() {
+  const grid = $("levelGrid");
+  grid.innerHTML = "";
+  for (let lv = 1; lv <= 10; lv++) {
+    const best = store.get(`mfa-best:sprint:L${lv}`, null);
+    const card = document.createElement("button");
+    card.className = "level-card";
+    card.innerHTML = `
+      <div class="level-num">L${lv}</div>
+      <div class="level-desc">${SPRINT_LEVEL_DESCS[lv]}</div>
+      <div class="level-best">${best !== null ? "Best: " + best : "—"}</div>`;
+    card.addEventListener("click", () => startSprintLevel(lv));
+    grid.appendChild(card);
+  }
+}
+
+function startSprintLevel(lv) {
+  sprintLevel = lv;
+  beginRound("sprint", SPRINT_TIME);
+  round.level = lv;
+  sprint = { q: 0, current: null, locked: false, powers: { time: 2, fifty: 2, skip: 1 } };
+  drawPowerups();
+  $("sprintFeedback").className = "feedback";
+  sprintNext();
+}
+
+function startSprint() { showSprintLevels(); }
+
+function sprintNext() {
+  if (sprint.q >= SPRINT_QUESTIONS) return endRound();
+  sprint.current = genSprintProblem(sprintLevel);
+  sprint.locked = false;
+  round.qStart = performance.now();
+
+  $("sprintExpr").innerHTML = exprHTML(sprint.current.parts);
+  $("sprintExpr").setAttribute("aria-label", exprSpoken(sprint.current.parts));
+  $("sprintQLabel").textContent = `Question ${sprint.q + 1} of ${SPRINT_QUESTIONS}`;
+  const pct = Math.round((sprint.q / SPRINT_QUESTIONS) * 100);
+  $("sprintQPct").textContent = pct + "%";
+  $("sprintQBar").style.width = pct + "%";
+
+  const options = shuffle([sprint.current.answer, ...makeDistractors(sprint.current.answer)]);
+  const wrap = $("sprintChoices");
+  wrap.innerHTML = "";
+  for (const opt of options) {
+    const btn = document.createElement("button");
+    btn.className = "choice";
+    btn.textContent = opt;
+    btn.addEventListener("click", () => sprintAnswer(btn, opt));
+    wrap.appendChild(btn);
+  }
+}
+
+function sprintAnswer(btn, value) {
+  if (sprint.locked || round.ended) return;
+  sprint.locked = true;
+  const fb = $("sprintFeedback");
+  if (value === sprint.current.answer) {
+    const pts = 10 * (round.streak + 1); // streak multiplier: 10, 20, 30…
+    registerCorrect(pts);
+    btn.classList.add("good");
+    fb.className = "feedback good show";
+    $("sprintFbText").textContent = "✓ Correct!";
+    $("sprintFbPts").textContent = "+" + pts;
+    announce("Correct, plus " + pts);
+  } else {
+    registerWrong();
+    btn.classList.add("bad");
+    // Reveal the right one briefly.
+    [...$("sprintChoices").children].find((b) => +b.textContent === sprint.current.answer)?.classList.add("good");
+    fb.className = "feedback bad show";
+    $("sprintFbText").textContent = "✗ Not quite";
+    $("sprintFbPts").textContent = "= " + sprint.current.answer;
+    announce("Wrong. The answer was " + sprint.current.answer);
+  }
+  sprint.q++;
+  setTimeout(() => { if (!round.ended) sprintNext(); }, 520);
+}
+
+function drawPowerups() {
+  $("pwTimeN").textContent = sprint.powers.time;
+  $("pwFiftyN").textContent = sprint.powers.fifty;
+  $("pwSkipN").textContent = sprint.powers.skip;
+  $("pwTime").disabled = sprint.powers.time <= 0;
+  $("pwFifty").disabled = sprint.powers.fifty <= 0;
+  $("pwSkip").disabled = sprint.powers.skip <= 0;
+}
+$("pwTime").addEventListener("click", () => {
+  if (sprint.powers.time <= 0 || round.ended) return;
+  sprint.powers.time--;
+  round.timeLeft = Math.min(round.timeLimit, round.timeLeft + 10);
+  updateHUD(); drawPowerups();
+});
+$("pwFifty").addEventListener("click", () => {
+  if (sprint.powers.fifty <= 0 || sprint.locked || round.ended) return;
+  sprint.powers.fifty--;
+  const wrong = [...$("sprintChoices").children].filter((b) => +b.textContent !== sprint.current.answer);
+  shuffle(wrong).slice(0, 2).forEach((b) => b.classList.add("gone"));
+  drawPowerups();
+});
+$("pwSkip").addEventListener("click", () => {
+  if (sprint.powers.skip <= 0 || sprint.locked || round.ended) return;
+  sprint.powers.skip--;
+  sprint.q++; // skipping costs the question slot but no streak/accuracy
+  drawPowerups();
+  sprintNext();
+});
+
+/* ==================================================================
+   GAME 2 — PATTERN MATCH
+   ================================================================== */
+let pattern = {};
+function startPattern() {
+  beginRound("pattern", 60);
+  pattern = { target: null, locked: false };
+  patternNext();
+}
+function randPattern() {
+  const cells = Array(9).fill(false);
+  shuffle([...Array(9).keys()]).slice(0, randInt(3, 5)).forEach((i) => (cells[i] = true));
+  return cells;
+}
+function mutate(cells) {
+  const c = [...cells];
+  shuffle([...Array(9).keys()]).slice(0, randInt(1, 2)).forEach((i) => (c[i] = !c[i]));
+  return c;
+}
+function gridHTML(cells) {
+  return cells.map((on) => `<i class="${on ? "on" : ""}"></i>`).join("");
+}
+function patternNext() {
+  pattern.target = randPattern();
+  pattern.locked = false;
+  round.qStart = performance.now();
+  $("patternTarget").innerHTML = gridHTML(pattern.target);
+
+  const opts = [pattern.target];
+  while (opts.length < 4) {
+    const m = mutate(pattern.target);
+    if (!opts.some((o) => o.join() === m.join())) opts.push(m);
+  }
+  const wrap = $("patternOptions");
+  wrap.innerHTML = "";
+  for (const opt of shuffle(opts)) {
+    const btn = document.createElement("button");
+    btn.className = "pattern-opt";
+    btn.setAttribute("aria-label", "Pattern option");
+    btn.innerHTML = `<div class="pgrid">${gridHTML(opt)}</div>`;
+    btn.addEventListener("click", () => {
+      if (pattern.locked || round.ended) return;
+      if (opt.join() === pattern.target.join()) {
+        pattern.locked = true;
+        registerCorrect(1); // score = matches found
+        announce("Match!");
+        setTimeout(() => { if (!round.ended) patternNext(); }, 120);
+      } else {
+        registerWrong();
+        btn.classList.add("bad");
+        setTimeout(() => btn.classList.remove("bad"), 320);
+        announce("Not that one");
+      }
+    });
+    wrap.appendChild(btn);
+  }
+}
+
+/* ==================================================================
+   GAME 3 — MEMORY GRID
+   ================================================================== */
+const MEM_EMOJI = ["🍎", "🌙", "⚡", "🎲", "🎧", "🚀", "🌵", "🔥"];
+let memory = {};
+function startMemory() {
+  beginRound("memory", 60);
+  memory = { open: [], lock: false };
+  memBuild();
+}
+function memBuild() {
+  memory.cards = shuffle([...MEM_EMOJI, ...MEM_EMOJI]).map((v) => ({ v, done: false }));
+  memory.open = [];
+  const grid = $("memGrid");
+  grid.innerHTML = "";
+  memory.cards.forEach((card, i) => {
+    const btn = document.createElement("button");
+    btn.className = "mem-card";
+    btn.textContent = "?";
+    btn.setAttribute("aria-label", "Hidden card");
+    btn.addEventListener("click", () => memFlip(i, btn));
+    grid.appendChild(btn);
+  });
+}
+function memFlip(i, btn) {
+  if (memory.lock || round.ended) return;
+  const card = memory.cards[i];
+  if (card.done || memory.open.some((o) => o.i === i)) return;
+  btn.textContent = card.v;
+  btn.classList.add("open");
+  memory.open.push({ i, btn });
+  if (memory.open.length < 2) return;
+
+  const [a, b] = memory.open;
+  memory.open = [];
+  if (memory.cards[a.i].v === memory.cards[b.i].v) {
+    memory.cards[a.i].done = memory.cards[b.i].done = true;
+    [a.btn, b.btn].forEach((el) => { el.classList.remove("open"); el.classList.add("done"); });
+    registerCorrect(1); // score = pairs matched
+    announce("Pair!");
+    if (memory.cards.every((c) => c.done)) setTimeout(() => { if (!round.ended) memBuild(); }, 450);
+  } else {
+    registerWrong();
+    memory.lock = true;
+    setTimeout(() => {
+      [a.btn, b.btn].forEach((el) => { el.textContent = "?"; el.classList.remove("open"); });
+      memory.lock = false;
+    }, 650);
+  }
+}
+
+/* ==================================================================
+   GAME 4 — WORD SCRAMBLE
+   ================================================================== */
+const WORDS = ("apple,beach,brain,bread,chair,cloud,dance,dream,earth,flame,fruit,glass,grape,green,happy,heart," +
+  "house,juice,light,lemon,magic,money,music,night,ocean,paint,paper,peace,phone,piano,pizza,plant,power,queen," +
+  "quick,radio,river,robot,smile,snake,space,sport,stone,storm,sugar,table,tiger,train,water,world,candy,sound," +
+  "sleep,story,sweet,watch,bird,cake,fish,gold,king,leaf,moon,rain,ship,star,tree,wind,wolf,door,fire,game," +
+  "hand,iron,jump,kite,lake,mind,nest,park,ring,sand,time,wave,yard,zero,brave,coral,delta,eagle,frost,giant").split(",");
+let scramble = {};
+function startScramble() {
+  beginRound("scramble", 60);
+  scramble = { word: "", deck: shuffle(WORDS) };
+  $("scrambleInput").value = "";
+  scrambleNext();
+  setTimeout(() => $("scrambleInput").focus(), 80);
+}
+function scrambleNext() {
+  scramble.word = scramble.deck.pop() || pick(WORDS);
+  round.qStart = performance.now();
+  let mixed = scramble.word;
+  while (mixed === scramble.word) mixed = shuffle(scramble.word.split("")).join("");
+  $("scrambleWord").textContent = mixed;
+  $("scrambleInput").value = "";
+}
+$("scrambleInput").addEventListener("input", (e) => {
+  if (round.ended || round.game !== "scramble") return;
+  const v = e.target.value.toLowerCase().replace(/[^a-z]/g, "");
+  e.target.value = v;
+  if (v === scramble.word) {
+    registerCorrect(1);
+    announce("Word solved");
+    scrambleNext();
+  }
+});
+$("scrambleInput").addEventListener("keydown", (e) => {
+  if (e.key !== "Enter") return;
+  e.preventDefault();
+  if (e.target.value && e.target.value !== scramble.word) {
+    registerWrong();
+    e.target.classList.add("shake");
+    setTimeout(() => e.target.classList.remove("shake"), 320);
+  }
+});
+$("scrambleSkip").addEventListener("click", () => { if (!round.ended) { scrambleNext(); $("scrambleInput").focus(); } });
+
+/* ==================================================================
+   GAME 5 — REACTION TAP
+   ================================================================== */
+const REACT_ROUNDS = 5;
+let react = {};
+function startReaction() {
+  beginRound("reaction", 0); // no countdown timer for this one
+  react = { n: 0, phase: "idle", times: [], goAt: 0, timeout: null };
+  reactDraw("idle");
+}
+function reactDraw(phase, extra) {
+  react.phase = phase;
+  const zone = $("reactionZone");
+  zone.className = "reaction-zone" + (phase === "waiting" ? " waiting" : phase === "go" ? " go" : phase === "early" ? " early" : "");
+  $("reactRound").textContent = `${Math.min(react.n + 1, REACT_ROUNDS)}/${REACT_ROUNDS}`;
+  $("reactBest").textContent = react.times.length ? Math.min(...react.times) + "ms" : "—";
+  $("reactLast").textContent = extra?.last ? extra.last + "ms" : (react.times.length ? react.times[react.times.length - 1] + "ms" : "—");
+  if (phase === "idle") {
+    $("rzBig").textContent = react.n === 0 ? "Tap to start" : "Tap for next round";
+    $("rzSub").textContent = "Wait for the green flash, then tap as fast as you can";
+  } else if (phase === "waiting") {
+    $("rzBig").textContent = "Wait for it…";
+    $("rzSub").textContent = "Tap only when the screen turns green";
+  } else if (phase === "go") {
+    $("rzBig").textContent = "TAP!";
+    $("rzSub").textContent = "";
+  } else if (phase === "early") {
+    $("rzBig").textContent = "Too soon!";
+    $("rzSub").textContent = "Tap to retry this round";
+  } else if (phase === "result") {
+    $("rzBig").textContent = extra.last + "ms";
+    $("rzSub").textContent = "Tap to continue";
+  }
+}
+$("reactionZone").addEventListener("pointerdown", () => {
+  if (round.game !== "reaction" || round.ended) return;
+  if (react.phase === "idle" || react.phase === "early" || react.phase === "result") {
+    if (react.n >= REACT_ROUNDS) return endRound();
+    reactDraw("waiting");
+    react.timeout = setTimeout(() => {
+      react.goAt = performance.now();
+      reactDraw("go");
+    }, randInt(1000, 3500));
+  } else if (react.phase === "waiting") {
+    clearTimeout(react.timeout);
+    registerWrong();
+    reactDraw("early");
+  } else if (react.phase === "go") {
+    const ms = Math.round(performance.now() - react.goAt);
+    react.times.push(ms);
+    round.times.push(ms / 1000);
+    registerCorrect(0);
+    react.n++;
+    if (react.n >= REACT_ROUNDS) {
+      reactDraw("result", { last: ms });
+      setTimeout(endRound, 700);
+    } else {
+      reactDraw("result", { last: ms });
+    }
+  }
+});
+
+/* ==================================================================
+   GAME 6 — NUMBER FLOW (daily challenge, typed input)
+   ================================================================== */
+let daily = {};
+function startDaily() {
+  beginRound("daily", DAILY_TIME);
